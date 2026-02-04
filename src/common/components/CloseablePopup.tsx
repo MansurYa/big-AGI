@@ -93,8 +93,6 @@ export function CloseablePopup(props: {
     },
   }], [props.placementOffset]);
 
-  const popperMemoSx: undefined | SxProps = React.useMemo(() => !props.zIndex ? undefined : ({ zIndex: props.zIndex }), [props.zIndex]);
-
   const styleMemoSx: SxProps = React.useMemo(() => ({
 
     // style
@@ -122,6 +120,7 @@ export function CloseablePopup(props: {
 
   }), [props.boxShadow, props.maxHeightGapPx, props.maxWidth, props.minWidth, props.size, props.dense, props.bigIcons, props.noBottomPadding, props.noTopPadding, props.sx]);
 
+
   return (
     <Popup
       role={undefined}
@@ -130,7 +129,7 @@ export function CloseablePopup(props: {
       placement={props.placement}
       disablePortal={false}
       modifiers={modifiersMemo}
-      sx={popperMemoSx}
+      sx={props.zIndex ? { zIndex: props.zIndex } : undefined}
     >
       <ClickAwayListener onClickAway={handleClose}>
         {props.menu ? (

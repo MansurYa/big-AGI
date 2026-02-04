@@ -195,6 +195,25 @@ Architecture and system documentation is available in the `/kb/` knowledge base:
 - Monitor Zustand state: Use Zustand DevTools
 - Check migration logs in console during rehydration
 
+### Working with Custom Proxies
+
+Big-AGI supports custom API proxies for LLM providers. When using custom proxies (e.g., gray proxies, reverse proxies):
+
+**Error Handling Improvements (2026-02-04)**
+- Anthropic parser now includes defensive error handling for proxy compatibility
+- Parsing errors show user-friendly messages instead of crashing
+- Detailed error logs in console for debugging: `[Anthropic Parser] Event processing error`
+
+**Common Issues:**
+1. **Zod Validation Errors**: Custom proxies may return non-standard response formats
+   - Parser now catches these and shows graceful error messages
+   - Check console for detailed parsing errors with event data preview
+
+2. **Browse vs WebSearch Confusion**:
+   - **Browse** (`/src/modules/browse/`) - Web page loading as attachments (requires WSS endpoint or server config)
+   - **WebSearch** - Anthropic server-side tool use (model feature, works via API)
+   - The "Web" button in Composer is for Browse, not WebSearch tool use
+
 ## Code Examples
 
 ### AIX Streaming Pattern

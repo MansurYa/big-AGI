@@ -73,9 +73,38 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
       timeToFirstEvent = Date.now() - parserCreationTimestamp;
 
     // if we've errored, we should not be receiving more data
-    if (hasErrored)
+    if (hasErrored) {
       console.log('Anthropic stream has errored already, but received more data:', eventData);
+      return; // Stop processing after error
+    }
 
+    // Wrap entire event processing in try-catch for resilience
+    try {
+      _processEvent(pt, eventData, eventName, context);
+    } catch (error: any) {
+      hasErrored = true;
+      const errorMessage = error?.message || safeErrorString(error);
+      console.error('[Anthropic Parser] Event processing error:', {
+        eventName,
+        error: errorMessage,
+        eventData: eventData?.substring(0, 200), // Log first 200 chars
+      });
+
+      // Check if this is a retryable parsing error
+      if (error instanceof RequestRetryError) {
+        throw error; // Re-throw retry errors
+      }
+
+      // For other errors, show user-friendly message
+      pt.setDialectTerminatingIssue(
+        `Parsing error: ${errorMessage}. This may indicate proxy compatibility issues.`,
+        IssueSymbols.Generic,
+        'srv-warn'
+      );
+    }
+  };
+
+  function _processEvent(pt: IParticleTransmitter, eventData: string, eventName?: string, context?: { retriesAvailable: boolean }): void {
     switch (eventName) {
       // Ignore pings
       case 'ping':
@@ -592,7 +621,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
         aixResilientUnknownValue('Anthropic', 'eventName', eventName);
         break;
     }
-  };
+  }
 }
 
 
@@ -602,6 +631,25 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
 
   return function(pt: IParticleTransmitter, fullData: string /*, eventName?: string, context?: { retriesAvailable: boolean } */): void {
 
+    // Wrap entire parsing in try-catch for resilience
+    try {
+      _parseNonStreaming(pt, fullData);
+    } catch (error: any) {
+      const errorMessage = error?.message || safeErrorString(error);
+      console.error('[Anthropic Parser NS] Parsing error:', {
+        error: errorMessage,
+        dataPreview: fullData?.substring(0, 200),
+      });
+
+      pt.setDialectTerminatingIssue(
+        `Non-streaming parsing error: ${errorMessage}. This may indicate proxy compatibility issues.`,
+        IssueSymbols.Generic,
+        'srv-warn'
+      );
+    }
+  };
+
+  function _parseNonStreaming(pt: IParticleTransmitter, fullData: string): void {
     // parse with validation (e.g. type: 'message' && role: 'assistant')
     const {
       model,
@@ -882,7 +930,7 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
       }
       pt.updateMetrics(metricsUpdate);
     }
-  };
+  }
 }
 
 

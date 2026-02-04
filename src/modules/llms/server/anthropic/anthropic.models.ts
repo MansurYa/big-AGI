@@ -277,11 +277,34 @@ export namespace AnthropicWire_API_Models_List {
     created_at: z.string(),
   });
 
+  // Lenient schema for custom proxies that return OpenAI-style responses
+  const ModelObject_Lenient_schema = z.object({
+    id: z.string(),
+    // Accept both 'type' (Anthropic) and 'object' (OpenAI) fields
+    type: z.string().optional(),
+    object: z.string().optional(),
+    // Make display_name and created_at optional for proxies
+    display_name: z.string().optional(),
+    created_at: z.string().optional(),
+    created: z.number().optional(), // OpenAI uses 'created' as unix timestamp
+  }).transform((data): z.infer<typeof ModelObject_schema> => {
+    // Normalize to Anthropic format
+    return {
+      type: 'model' as const,
+      id: data.id,
+      display_name: data.display_name || data.id, // Fallback to id if display_name missing
+      created_at: data.created_at || (data.created ? new Date(data.created * 1000).toISOString() : new Date().toISOString()),
+    };
+  });
+
+  // Combined schema: try strict first, fallback to lenient
+  const ModelObject_Combined_schema = ModelObject_schema.or(ModelObject_Lenient_schema);
+
   export const Response_schema = z.object({
-    data: z.array(ModelObject_schema),
-    has_more: z.boolean(),
-    first_id: z.string().nullable(),
-    last_id: z.string().nullable(),
+    data: z.array(ModelObject_Combined_schema),
+    has_more: z.boolean().optional().default(false),
+    first_id: z.string().nullable().optional().default(null),
+    last_id: z.string().nullable().optional().default(null),
   });
 
 }
