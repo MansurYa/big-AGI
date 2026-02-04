@@ -203,6 +203,20 @@ Big-AGI supports custom API proxies for LLM providers. When using custom proxies
 - Anthropic parser now includes defensive error handling for proxy compatibility
 - Parsing errors show user-friendly messages instead of crashing
 - Detailed error logs in console for debugging: `[Anthropic Parser] Event processing error`
+- Added support for non-standard proxy events and response formats
+
+**Proxy Compatibility Fixes:**
+1. **'exception' Event Support**: Custom proxies may send `exception` events instead of standard `error` events
+   - Parser now handles both formats gracefully
+   - Console log: `[Anthropic Parser] Proxy exception: <message>`
+
+2. **Optional Message ID**: Some proxies omit the `id` field in responses
+   - Response schema now accepts missing `id` field
+   - Prevents "expected string, received undefined" errors
+
+3. **Unexpected input_json_delta**: Proxies may send tool deltas for non-tool blocks
+   - Parser logs warning and continues instead of crashing
+   - Console: `[Anthropic Parser] Unexpected input_json_delta for block type`
 
 **Common Issues:**
 1. **Zod Validation Errors**: Custom proxies may return non-standard response formats

@@ -469,8 +469,11 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
               contentBlock.input += delta.partial_json;
               // TODO: Stream server tool args when we add executedBy:'server' support to DMessage tool_response parts
               // pt.appendFunctionCallInvocationArgs(contentBlock.id, delta.partial_json);
-            } else
-              throw new Error('Unexpected input_json_delta');
+            } else {
+              // CUSTOM PROXY: Some proxies send input_json_delta for unexpected block types
+              console.warn(`[Anthropic Parser] Unexpected input_json_delta for block type '${contentBlock.type}' at index ${index} - ignoring`);
+              // Gracefully ignore instead of throwing
+            }
             break;
 
           case 'thinking_delta':
@@ -615,6 +618,14 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
 
         // Non-retryable errors (or no retries left): show to user
         return pt.setDialectTerminatingIssue(errorText || 'unknown server issue.', IssueSymbols.Generic, 'srv-warn');
+
+      // CUSTOM PROXY - Some proxies send 'exception' events instead of 'error'
+      case 'exception':
+        hasErrored = true;
+        const exceptionData = JSON.parse(eventData);
+        const exceptionText = exceptionData.exception_message || exceptionData.raw_data?.message || 'Unknown exception';
+        console.log(`[Anthropic Parser] Proxy exception: ${exceptionText}`);
+        return pt.setDialectTerminatingIssue(`Proxy error: ${exceptionText}`, IssueSymbols.Generic, 'srv-warn');
 
       default:
         if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log(`ant unknown event: ${eventName}`);

@@ -885,7 +885,8 @@ export namespace AnthropicWire_API_Message_Create {
   export type Response = z.infer<typeof Response_schema>;
   export const Response_schema = z.object({
     // Unique object identifier.
-    id: z.string(),
+    // CUSTOM PROXY: Some proxies don't include message id - make it optional
+    id: z.string().optional(),
 
     // For Messages, this is always "message".
     type: z.literal('message'),
