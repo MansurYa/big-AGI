@@ -12,6 +12,7 @@ import { RequestRetryError } from '../chatGenerate.retrier';
 
 // configuration
 const ANTHROPIC_DEBUG_EVENT_SEQUENCE = false; // true: shows the sequence of events
+const ANTHROPIC_DEBUG_RAW_EVENTS = true; // true: logs full RAW events for proxy debugging
 // NOTE: the following weakens protocol validation - remove if possible. testing with web search active to see if blocks come out of order
 const ANTHROPIC_FIX_REUSED_BLOCK_INDEX = true; // [Anthropic, 2026-01-12] Block Start Index issue workaround
 
@@ -105,6 +106,14 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
   };
 
   function _processEvent(pt: IParticleTransmitter, eventData: string, eventName?: string, context?: { retriesAvailable: boolean }): void {
+    // [PROXY DEBUG] Log full RAW events for debugging proxy compatibility
+    if (ANTHROPIC_DEBUG_RAW_EVENTS) {
+      console.log('[Anthropic Parser] RAW Event:', {
+        eventName,
+        eventData: eventData.length > 500 ? eventData.substring(0, 500) + '...[truncated]' : eventData,
+      });
+    }
+
     switch (eventName) {
       // Ignore pings
       case 'ping':

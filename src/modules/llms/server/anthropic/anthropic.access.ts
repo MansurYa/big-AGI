@@ -95,6 +95,7 @@ const PER_MODEL_BETA_FEATURES: { [modelId: string]: string[] } = {
 export type AnthropicHeaderOptions = {
   modelIdForBetaFeatures?: string;
   vndAntWebFetch?: boolean;
+  vndAntWebSearch?: boolean;
   vndAnt1MContext?: boolean;
   vndAntEffort?: boolean; // [Anthropic, effort-2025-11-24]
   enableSkills?: boolean;
@@ -166,6 +167,10 @@ function _anthropicHeaders(options?: AnthropicHeaderOptions): Record<string, str
   // Note: web-fetch-2025-09-10 is documented in official API docs but not yet in TypeScript SDK types
   if (options?.vndAntWebFetch)
     betaFeatures.push('web-fetch-2025-09-10');
+
+  // Add beta feature for web-search if enabled
+  if (options?.vndAntWebSearch)
+    betaFeatures.push('web-search-2025-03-05');
 
   // Add beta feature for 1M context window if enabled
   if (options?.vndAnt1MContext)

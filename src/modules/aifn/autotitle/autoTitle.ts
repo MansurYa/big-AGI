@@ -36,6 +36,9 @@ export async function autoConversationTitle(conversationId: string, forceReplace
   const historyLines: string[] = excludeSystemMessages(conversation.messages).slice(-5).map(m => {
     const messageText = messageFragmentsReduceText(m.fragments);
     let text = messageText.split('\n')[0];
+    // Remove any thinking/reasoning tags that may have leaked from proxies (closed and unclosed)
+    text = text.replace(/<thinking>[\s\S]*?<\/thinking>/gi, '').trim();
+    text = text.replace(/<thinking>[\s\S]*$/gi, '').trim(); // unclosed tag at end
     text = text.length > 100 ? text.substring(0, 100) + '...' : text;
     text = `${m.role === 'user' ? 'You' : 'Assistant'}: ${text}`;
     return `- ${text}`;
@@ -57,8 +60,11 @@ ${historyLines.join('\n')}
       'chat-ai-title', conversationId,
     );
 
-    // parse title
+    // parse title - remove thinking tags that proxies may include in responses
     title = title
+      ?.replace(/<thinking>[\s\S]*?<\/thinking>/gi, '')
+      ?.replace(/<\/thinking>/gi, '') // orphaned closing tag
+      ?.replace(/<thinking>[\s\S]*$/gi, '') // unclosed tag at end
       ?.trim()
       ?.replaceAll('"', '')
       ?.replace('Title: ', '')

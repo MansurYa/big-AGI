@@ -273,3 +273,162 @@ Centralized server for data processing operations:
 Located at `/src/server/trpc/trpc.router-cloud.ts`
 
 **Key Pattern**: Edge runtime for AI (fast, distributed), Cloud runtime for data ops (centralized, Node.js)
+
+## Custom Proxy Compatibility (Gray Proxies)
+
+Big-AGI supports custom API proxies for LLM providers. This section documents known issues and fixes for proxy compatibility.
+
+### Proxy Configuration
+
+Environment variables for custom Anthropic proxy:
+```bash
+ANTHROPIC_API_HOST="https://your-proxy.example.com/api"
+ANTHROPIC_API_KEY="your_proxy_key"
+```
+
+Or configure in UI: Settings → Models → Anthropic → API Host
+
+### Known Proxy Issues & Fixes (2026-02-21)
+
+#### 1. Zod Validation Errors for `stop_reason` and `stop_sequence`
+
+**Problem:** Proxies may return non-standard values for `stop_reason` (e.g., `null` instead of enum value) or omit `stop_sequence`.
+
+**Error:**
+```
+Invalid option: expected one of "end_turn"|"max_tokens"|"stop_sequence"|"tool_use"|"pause_turn"|"refusal"|"model_context_window_exceeded"
+Invalid input: expected string, received undefined
+```
+
+**Fix Location:** `src/modules/aix/server/dispatch/wiretypes/anthropic.wiretypes.ts`
+
+**Solution:** Schema uses `z.union([StopReason_schema, z.string(), z.null()]).optional()` to accept any value.
+
+#### 2. Missing Message ID
+
+**Problem:** Some proxies omit the `id` field in message responses.
+
+**Fix Location:** `src/modules/aix/server/dispatch/wiretypes/anthropic.wiretypes.ts`
+
+**Solution:** `id: z.string().optional()` in Response_schema.
+
+#### 3. Unexpected `input_json_delta` for Non-Tool Blocks
+
+**Problem:** Proxies may send `input_json_delta` events for unexpected block types.
+
+**Fix Location:** `src/modules/aix/server/dispatch/chatGenerate/parsers/anthropic.parser.ts`
+
+**Solution:** Parser logs warning and continues instead of throwing:
+```typescript
+console.warn(`[Anthropic Parser] Unexpected input_json_delta for block type '${contentBlock.type}' at index ${index} - ignoring`);
+```
+
+#### 4. `<thinking>` Tags Leaking into Chat Titles
+
+**Problem:** Proxies may return thinking content as text with `<thinking>` tags instead of proper `thinking` blocks, causing tags to appear in auto-generated chat titles.
+
+**Fix Location:** `src/modules/aifn/autotitle/autoTitle.ts`
+
+**Solution:** Filter thinking tags from both input history and generated title:
+```typescript
+// In historyLines processing:
+text = text.replace(/<thinking>[\s\S]*?<\/thinking>/gi, '').trim();
+text = text.replace(/<thinking>[\s\S]*$/gi, '').trim(); // unclosed tag
+
+// In title parsing:
+title = title
+  ?.replace(/<thinking>[\s\S]*?<\/thinking>/gi, '')
+  ?.replace(/<\/thinking>/gi, '') // orphaned closing tag
+  ?.replace(/<thinking>[\s\S]*$/gi, '') // unclosed tag at end
+  ?.trim()
+```
+
+#### 5. Proxy `exception` Events
+
+**Problem:** Some proxies send `exception` events instead of standard `error` events.
+
+**Fix Location:** `src/modules/aix/server/dispatch/chatGenerate/parsers/anthropic.parser.ts`
+
+**Solution:** Parser handles `exception` event type:
+```typescript
+case 'exception':
+  const exceptionText = exceptionData.exception_message || exceptionData.raw_data?.message || 'Unknown exception';
+  return pt.setDialectTerminatingIssue(`Proxy error: ${exceptionText}`, IssueSymbols.Generic, 'srv-warn');
+```
+
+### WebSearch with Custom Proxies
+
+#### How WebSearch Works
+
+1. **UI Setting:** Models → select model → Web Search → On/Off
+2. **Parameter:** `llmVndAntWebSearch: 'auto' | undefined`
+3. **Request:** When `'auto'`, big-AGI adds `web_search_20250305` tool to request
+4. **Response Flow:**
+   - `server_tool_use` block with `name: "web_search"`
+   - `web_search_tool_result` block with search results
+   - `text` block with model's response
+
+#### Known WebSearch Proxy Issues
+
+**Problem 1: Poor Search Quality**
+- Proxy's search engine returns irrelevant results (e.g., Steam Community, Wiktionary instead of actual content)
+- This is a proxy-side issue, not big-AGI
+
+**Problem 2: Model Dumps Raw Results**
+- Instead of analyzing search results and formulating a response, model outputs "Here are the search results for..." with raw list
+- This is proxy model behavior, not big-AGI parsing issue
+
+**Diagnosis:** Check console logs:
+```
+[Anthropic] Sending tools: web_search_20250305  // WebSearch enabled
+[Anthropic] No tools in request                  // WebSearch disabled
+```
+
+**Workaround:** If proxy WebSearch is broken, disable it in model settings (Web Search → Off).
+
+### Debugging Proxy Issues
+
+Enable raw event logging in `src/modules/aix/server/dispatch/chatGenerate/parsers/anthropic.parser.ts`:
+```typescript
+const ANTHROPIC_DEBUG_RAW_EVENTS = true; // logs full RAW events
+const ANTHROPIC_DEBUG_EVENT_SEQUENCE = true; // logs event sequence
+```
+
+Console output shows:
+```
+[Anthropic Parser] RAW Event: { eventName: 'message_start', eventData: '...' }
+[Anthropic Parser] RAW Event: { eventName: 'content_block_start', eventData: '...' }
+```
+
+### Testing Proxy with curl
+
+```bash
+curl -s "https://your-proxy.example.com/api/v1/messages" \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: YOUR_PROXY_KEY" \
+  -H "anthropic-version: 2023-06-01" \
+  -d '{
+    "model": "claude-haiku-4-5-20251001",
+    "max_tokens": 100,
+    "messages": [{"role": "user", "content": "Hello"}]
+  }'
+```
+
+### Key Files for Proxy Compatibility
+
+| File | Purpose |
+|------|---------|
+| `src/modules/aix/server/dispatch/wiretypes/anthropic.wiretypes.ts` | Zod schemas for request/response validation |
+| `src/modules/aix/server/dispatch/chatGenerate/parsers/anthropic.parser.ts` | Streaming event parser with error handling |
+| `src/modules/aix/server/dispatch/chatGenerate/adapters/anthropic.messageCreate.ts` | Request builder, adds tools |
+| `src/modules/aifn/autotitle/autoTitle.ts` | Auto-title generation with thinking tag filtering |
+| `src/common/stores/llms/llms.parameters.ts` | Parameter definitions including `llmVndAntWebSearch` |
+| `src/modules/llms/models-modal/LLMParametersEditor.tsx` | UI for model parameters |
+
+### Common Proxy Error Messages
+
+| Error | Meaning | Solution |
+|-------|---------|----------|
+| `没有可用账号` | "No available accounts" - proxy overloaded | Wait and retry, or contact proxy admin |
+| `HTTP 500 Internal Server Error` | Proxy backend error | Check proxy status |
+| `Parsing error: [...]. This may indicate proxy compatibility issues.` | Response format mismatch | Check if schema needs updating for new proxy format |

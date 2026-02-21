@@ -904,10 +904,12 @@ export namespace AnthropicWire_API_Message_Create {
     /**
      * The reason why Claude stopped generating.
      * In non-streaming mode this value is always non-null. In streaming mode, it is null in the message_start event and non-null otherwise.
+     * CUSTOM PROXY: Accept any value (string/null/undefined) for maximum proxy compatibility
      */
-    stop_reason: StopReason_schema.nullable(),
+    stop_reason: z.union([StopReason_schema, z.string(), z.null()]).optional(),
     // Which custom stop sequence was generated, if any.
-    stop_sequence: z.string().nullable(),
+    // CUSTOM PROXY: Accept string/null/undefined for proxy compatibility
+    stop_sequence: z.union([z.string(), z.null()]).optional(),
 
     /**
      * Billing and rate-limit usage.
@@ -963,9 +965,10 @@ export namespace AnthropicWire_API_Message_Create {
   export const event_MessageDelta_schema = z.object({
     type: z.literal('message_delta'),
     // MessageDelta
+    // CUSTOM PROXY: Accept any value for stop_reason/stop_sequence for proxy compatibility
     delta: z.object({
-      stop_reason: StopReason_schema.nullable(),
-      stop_sequence: z.string().nullable(),
+      stop_reason: z.union([StopReason_schema, z.string(), z.null()]).optional(),
+      stop_sequence: z.union([z.string(), z.null()]).optional(),
     }),
     // MessageDeltaUsage - extended to include cache and server tool metrics
     usage: z.object({

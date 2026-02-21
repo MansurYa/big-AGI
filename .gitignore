@@ -56,3 +56,6 @@ next-env.d.ts
 
 # Ignore temporary CC files
 /tmpclaude*
+
+.claude/settings.json
+/.claude/

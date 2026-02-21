@@ -62,6 +62,7 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
       const anthropicRequest = anthropicAccess(access, ANTHROPIC_API_PATHS.messages, {
         modelIdForBetaFeatures: model.id,
         vndAntWebFetch: model.vndAntWebFetch === 'auto',
+        vndAntWebSearch: model.vndAntWebSearch === 'auto',
         vndAnt1MContext: model.vndAnt1MContext === true,
         vndAntEffort: !!model.vndAntEffort,
         enableSkills: !!model.vndAntSkills,

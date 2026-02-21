@@ -242,6 +242,13 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
   }
 
 
+  // DEBUG: Log tools being sent to proxy
+  if (payload.tools?.length) {
+    console.log('[Anthropic] Sending tools:', payload.tools.map(t => t.type || t.name).join(', '));
+  } else {
+    console.log('[Anthropic] No tools in request');
+  }
+
   // Preemptive error detection with server-side payload validation before sending it upstream
   const validated = AnthropicWire_API_Message_Create.Request_schema.safeParse(payload);
   if (!validated.success) {
