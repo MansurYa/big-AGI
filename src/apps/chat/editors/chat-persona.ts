@@ -35,11 +35,13 @@ export async function runPersonaOnConversationHead(
   const cHandler = ConversationsManager.getHandler(conversationId);
 
   const _history = cHandler.historyViewHeadOrThrow('runPersonaOnConversationHead') as Readonly<DMessage[]>;
+  console.log('[DEBUG] chat-persona.ts:37 - _history.length:', _history.length);
   if (_history.length === 0)
     return false;
 
   // split pre dynamic-personas
   let { chatSystemInstruction, chatHistory } = splitSystemMessageFromHistory(_history);
+  console.log('[DEBUG] chat-persona.ts:42 - chatHistory.length after split:', chatHistory.length);
 
   // assistant response placeholder
   const isNotifyEnabled = getIsNotificationEnabledForModel(assistantLlmId);

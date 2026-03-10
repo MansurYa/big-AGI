@@ -1,6 +1,7 @@
 import { getChatTokenCountingMethod } from '../../../apps/chat/store-app-chat';
 
 import type { DLLM } from '~/common/stores/llms/llms.types';
+import { getAnthropicHostFromLLM } from '~/common/stores/llms/store-llms';
 import { approximateTextTokens } from '~/common/tokens/tokens.approximate';
 import { imageTokensForLLM } from '~/common/tokens/tokens.image';
 import { textTokensForLLM } from '~/common/tokens/tokens.text';
@@ -10,8 +11,9 @@ import { DMessageAttachmentFragment, DMessageFragment, isAttachmentFragment, isC
 
 
 export function estimateTokensForFragments(llm: DLLM, role: DMessageRole, fragments: DMessageFragment[], addTopGlue: boolean, debugFrom: string) {
+  const anthropicHost = getAnthropicHostFromLLM(llm);
   return fragments.reduce((acc, fragment) => {
-    let fragmentTokens = _fragmentTokens(llm, role, fragment, debugFrom);
+    let fragmentTokens = _fragmentTokens(llm, role, fragment, debugFrom, anthropicHost);
     if (acc > 0 || addTopGlue)
       fragmentTokens += _glueForFragmentTokens(llm);
     return acc + fragmentTokens;
@@ -21,10 +23,10 @@ export function estimateTokensForFragments(llm: DLLM, role: DMessageRole, fragme
 
 // Text
 
-export function estimateTextTokens(text: string, llm: DLLM, debugFrom: string): number {
+export function estimateTextTokens(text: string, llm: DLLM, debugFrom: string, apiHost?: string): number {
   // Approximate path
   if (getChatTokenCountingMethod() === 'approximate')
-    return approximateTextTokens(text, llm, debugFrom);
+    return approximateTextTokens(text, llm, debugFrom, apiHost);
 
   // Default to accurate method (the JS+WASM 'tiktoken' lib)
   const accurateTokens = textTokensForLLM(text, llm, debugFrom);
@@ -32,7 +34,7 @@ export function estimateTextTokens(text: string, llm: DLLM, debugFrom: string): 
     return accurateTokens;
 
   // Fallback to approximate if the accurate method is not available
-  return approximateTextTokens(text, llm, debugFrom);
+  return approximateTextTokens(text, llm, debugFrom, apiHost);
 }
 
 function estimateImageTokens(width: number | undefined, height: number | undefined, debugTitle: string | undefined, llm: DLLM): number {
@@ -42,7 +44,7 @@ function estimateImageTokens(width: number | undefined, height: number | undefin
 
 // Content Parts
 
-function _fragmentTokens(llm: DLLM, role: DMessageRole, fragment: DMessageFragment, debugFrom: string): number {
+function _fragmentTokens(llm: DLLM, role: DMessageRole, fragment: DMessageFragment, debugFrom: string, anthropicHost?: string): number {
   // non content/attachment fragments are ignored
   if (!isContentOrAttachmentFragment(fragment) || fragment.part.pt === '_pt_sentinel')
     return 0;
@@ -54,7 +56,7 @@ function _fragmentTokens(llm: DLLM, role: DMessageRole, fragment: DMessageFragme
     switch (aPt) {
       case 'doc':
         const likelyRendition = marshallWrapText(aPart.data.text, aPart.ref, 'markdown-code');
-        return estimateTextTokens(likelyRendition, llm, debugFrom);
+        return estimateTextTokens(likelyRendition, llm, debugFrom, anthropicHost);
       case 'reference':
         // "fallback" to inline computation for Asset Reference fragments with legacy image refs
         if (aPart.rt === 'zync' && aPart.assetType === 'image' && aPart._legacyImageRefPart?.dataRef?.reftype === 'dblob') {
@@ -75,7 +77,7 @@ function _fragmentTokens(llm: DLLM, role: DMessageRole, fragment: DMessageFragme
     const cPt = cPart.pt;
     switch (cPt) {
       case 'error':
-        return estimateTextTokens(cPart.error, llm, debugFrom);
+        return estimateTextTokens(cPart.error, llm, debugFrom, anthropicHost);
       case 'reference':
         // "fallback" to inline computation for Asset Reference fragments with legacy image refs
         if (cPart.rt === 'zync' && cPart.assetType === 'image' && cPart._legacyImageRefPart?.dataRef?.reftype === 'dblob') {
@@ -88,7 +90,7 @@ function _fragmentTokens(llm: DLLM, role: DMessageRole, fragment: DMessageFragme
         const forcedSize = role === 'assistant' ? 512 : undefined;
         return estimateImageTokens(forcedSize || cPart.width, forcedSize || cPart.height, debugFrom, llm);
       case 'text':
-        return estimateTextTokens(cPart.text, llm, debugFrom);
+        return estimateTextTokens(cPart.text, llm, debugFrom, anthropicHost);
       case 'tool_invocation':
       case 'tool_response':
         break; // warn

@@ -212,6 +212,23 @@ export async function aixChatGenerateContent_DMessage_FromConversation(
       chatSequence: await aixCGR_ChatSequence_FromDMessagesOrThrow(chatHistoryWithoutSystemMessages),
     };
 
+    // [DEBUG] Calculate and log total characters being sent to API
+    const totalChars = JSON.stringify(aixChatContentGenerateRequest).length;
+    const systemChars = JSON.stringify(aixChatContentGenerateRequest.systemMessage).length;
+    const chatSeqChars = aixChatContentGenerateRequest.chatSequence.reduce((sum, msg) => {
+      return sum + JSON.stringify(msg).length;
+    }, 0);
+    console.log('[DEBUG] aixChatGenerateContent - TOTAL request size:', totalChars, 'chars');
+    console.log('[DEBUG] aixChatGenerateContent - systemMessage:', systemChars, 'chars');
+    console.log('[DEBUG] aixChatGenerateContent - chatSequence:', chatSeqChars, 'chars, messages:', aixChatContentGenerateRequest.chatSequence.length);
+    // Log first 50 chars of each message for verification
+    aixChatContentGenerateRequest.chatSequence.forEach((msg, i) => {
+      const textParts = msg.parts.filter((p: any) => p.pt === 'text').map((p: any) => p.text);
+      const preview = textParts.join('').substring(0, 80).replace(/\n/g, '\\n');
+      const totalLen = textParts.join('').length;
+      console.log(`[DEBUG] msg[${i}] role=${msg.role}, len=${totalLen}, preview="${preview}..."`);
+    });
+
     await aixChatGenerateContent_DMessage_orThrow(
       llmId,
       aixChatContentGenerateRequest,

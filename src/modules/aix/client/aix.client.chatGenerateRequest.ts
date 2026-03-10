@@ -264,8 +264,11 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
   // _assemblyMode: 'complete' = 'complete',
 ): Promise<AixAPIChatGenerate_Request['chatSequence']> {
 
+  console.log('[DEBUG] aixCGR_ChatSequence_FromDMessagesOrThrow - INPUT messageSequenceWithoutSystem.length:', messageSequenceWithoutSystem.length);
+
   // if the user has marked messages for exclusion, we skip them
   messageSequenceWithoutSystem = messageSequenceWithoutSystem.filter(m => !messageHasUserFlag(m, MESSAGE_FLAG_AIX_SKIP));
+  console.log('[DEBUG] aixCGR_ChatSequence_FromDMessagesOrThrow - AFTER AIX_SKIP filter:', messageSequenceWithoutSystem.length);
 
   const lastAssistantMessageIndex = messageSequenceWithoutSystem.findLastIndex(m => m.role === 'assistant');
 
@@ -564,6 +567,7 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
   } as Pick<AixAPIChatGenerate_Request, 'systemMessage' | 'chatSequence'>) /* this is the key to the new version of this function which doesn't extract system messages anymore */);
 
   // as promised we only return this as we only built this, and not the full CGR.
+  console.log('[DEBUG] aixCGR_ChatSequence_FromDMessagesOrThrow - OUTPUT chatSequence.length:', cgr.chatSequence.length);
   return cgr.chatSequence;
 }
 

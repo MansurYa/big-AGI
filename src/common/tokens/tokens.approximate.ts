@@ -4,6 +4,13 @@ import type { DLLM } from '~/common/stores/llms/llms.types';
 // configuration
 const DEBUG_TOKEN_COUNT = false;
 
+// Proxy-specific token offsets
+// Some proxies inject system prompts that add tokens to every request
+const PROXY_TOKEN_OFFSETS: Record<string, number> = {
+  'api.kiro.cheap': 2400, // kiro.cheap adds ~2400 tokens system prompt
+  // Add other proxies here as needed
+} as const;
+
 
 /**
  * Optimized lightweight approximate token counting without tiktoken dependency.
@@ -155,33 +162,58 @@ function countSpaces(text: string): number {
 }
 
 /**
- * Fast approximate token counting with optimized algorithms
+ * Detects proxy-specific token offset based on API host
  */
-export function approximateTextTokens(text: string, llm: DLLM, debugFrom: string): number {
+function getProxyTokenOffset(apiHost: string | undefined): number {
+  if (!apiHost) return 0;
+
+  // Normalize host (remove protocol and trailing slashes)
+  const normalizedHost = apiHost.toLowerCase()
+    .replace(/^https?:\/\//, '')
+    .replace(/\/$/, '');
+
+  // Check if this host matches any known proxy with token offset
+  for (const [proxyHost, offset] of Object.entries(PROXY_TOKEN_OFFSETS)) {
+    if (normalizedHost.includes(proxyHost)) {
+      return offset;
+    }
+  }
+
+  return 0;
+}
+
+/**
+ * Fast approximate token counting with optimized algorithms
+ * @param text - The text to count tokens for
+ * @param llm - The LLM model configuration
+ * @param debugFrom - Debug label for logging
+ * @param apiHost - Optional API host to detect proxy-specific offsets (for Anthropic proxies)
+ */
+export function approximateTextTokens(text: string, llm: DLLM, debugFrom: string, apiHost?: string): number {
   if (!text) return 0;
   if (text.length === 1) return 1; // single character fast path
-  
+
   // get content type and model family (optimized)
   const contentType = detectContentType(text);
   const modelFamily = getModelFamily(llm);
-  
+
   const baseRatio = TOKEN_RATIOS[modelFamily] || TOKEN_RATIOS['default'];
   const languageMultiplier = LANGUAGE_MULTIPLIERS[contentType] || LANGUAGE_MULTIPLIERS['default'];
-  
+
   // base calculation with improved formula
   const textLength = text.length;
   let baseTokens = textLength / baseRatio;
-  
+
   // apply language-specific adjustments
   baseTokens *= languageMultiplier;
-  
+
   // Optimized heuristics:
-  
+
   // 1. Space adjustment (optimized counting)
   const spaceCount = countSpaces(text);
   const spaceRatio = spaceCount / textLength;
   const spaceAdjustment = baseTokens * spaceRatio * 0.08; // Refined space reduction
-  
+
   // 2. Length-based adjustments (longer texts compress better)
   let lengthAdjustment = 0;
   if (textLength > 1000)
@@ -198,15 +230,22 @@ export function approximateTextTokens(text: string, llm: DLLM, debugFrom: string
   //     repetitionReduction = baseTokens * 0.1; // 10% reduction for obvious repetition
   //   }
   // }
-  
+
   // final calculation
   const adjustedTokens = baseTokens - spaceAdjustment + lengthAdjustment; // - repetitionReduction;
-  const finalCount = Math.max(1, Math.round(adjustedTokens));
-  
+  let finalCount = Math.max(1, Math.round(adjustedTokens));
+
+  // Add proxy-specific token offset (only for Anthropic models with custom proxies)
+  const proxyOffset = getProxyTokenOffset(apiHost);
+  if (proxyOffset > 0 && modelFamily === 'claude') {
+    finalCount += proxyOffset;
+    DEBUG_TOKEN_COUNT && console.log(`approximateTextTokens: adding proxy offset +${proxyOffset} for host ${apiHost}`);
+  }
+
   DEBUG_TOKEN_COUNT && console.log(
     `approximateTextTokens: ${debugFrom}, family: ${modelFamily}, type: ${contentType}, ` +
     `chars: ${textLength}, tokens: ${finalCount}, ratio: ${(textLength / finalCount).toFixed(2)}`
   );
-  
+
   return finalCount;
 }

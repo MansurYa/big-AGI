@@ -30,13 +30,23 @@ const _hardcodedAnthropicVariants: ModelVariantMap = {
 
   // NOTE: what's not redefined below is inherited from the underlying model definition
 
+  // Claude 4.6 models with thinking variants
+  'claude-opus-4-6': {
+    idVariant: 'thinking',
+    label: 'Claude Opus 4.6 (Thinking)',
+    description: 'Claude Opus 4.6 with extended thinking mode for complex reasoning and agentic workflows',
+    interfaces: [...IF_4_R, LLM_IF_ANT_ToolsSearch],
+    parameterSpecs: [...ANT_PAR_WEB_THINKING, { paramId: 'llmVndAnt1MContext' }, { paramId: 'llmVndAntEffort' }, { paramId: 'llmVndAntSkills' }],
+    maxCompletionTokens: 32000,
+  },
+
   // Claude 4.5 models with thinking variants
   'claude-opus-4-5-20251101': {
     idVariant: 'thinking',
     label: 'Claude Opus 4.5 (Thinking)',
     description: 'Claude Opus 4.5 with extended thinking mode for complex reasoning and agentic workflows',
     interfaces: [...IF_4_R, LLM_IF_ANT_ToolsSearch],
-    parameterSpecs: [...ANT_PAR_WEB_THINKING, { paramId: 'llmVndAntEffort' }, { paramId: 'llmVndAntSkills' }],
+    parameterSpecs: [...ANT_PAR_WEB_THINKING, { paramId: 'llmVndAnt1MContext' }, { paramId: 'llmVndAntEffort' }, { paramId: 'llmVndAntSkills' }],
     benchmark: { cbaElo: 1468 }, // claude-opus-4-5-20251101-thinking-32k
     maxCompletionTokens: 32000,
   },
@@ -113,6 +123,28 @@ export function anthropicInjectVariants(acc: ModelDescriptionSchema[], model: Mo
 
 export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: boolean })[] = [
 
+  // Claude 4.6 models
+  {
+    id: 'claude-opus-4-6', // Active
+    label: 'Claude Opus 4.6', // 🌟
+    description: 'Latest and most intelligent Opus model with advanced reasoning capabilities',
+    contextWindow: 200000,
+    maxCompletionTokens: 64000,
+    interfaces: [...IF_4, LLM_IF_ANT_ToolsSearch],
+    parameterSpecs: [...ANT_PAR_WEB, { paramId: 'llmVndAnt1MContext' }, { paramId: 'llmVndAntEffort' }, { paramId: 'llmVndAntSkills' }],
+    // Note: Tiered pricing - ≤200K: $15/$75, >200K: $30/$112.50 (with 1M context enabled)
+    chatPrice: {
+      input: [{ upTo: 200000, price: 15 }, { upTo: null, price: 30 }],
+      output: [{ upTo: 200000, price: 75 }, { upTo: null, price: 112.50 }],
+      cache: {
+        cType: 'ant-bp',
+        read: [{ upTo: 200000, price: 1.50 }, { upTo: null, price: 3.00 }],
+        write: [{ upTo: 200000, price: 18.75 }, { upTo: null, price: 37.50 }],
+        duration: 300,
+      },
+    },
+  },
+
   // Claude 4.5 models
   {
     id: 'claude-opus-4-5-20251101', // Active
@@ -121,8 +153,18 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     contextWindow: 200000,
     maxCompletionTokens: 64000,
     interfaces: [...IF_4, LLM_IF_ANT_ToolsSearch],
-    parameterSpecs: [...ANT_PAR_WEB, { paramId: 'llmVndAntEffort' }],
-    chatPrice: { input: 5, output: 25, cache: { cType: 'ant-bp', read: 0.50, write: 6.25, duration: 300 } },
+    parameterSpecs: [...ANT_PAR_WEB, { paramId: 'llmVndAnt1MContext' }, { paramId: 'llmVndAntEffort' }],
+    // Note: Tiered pricing - ≤200K: $5/$25, >200K: $10/$37.50 (with 1M context enabled)
+    chatPrice: {
+      input: [{ upTo: 200000, price: 5 }, { upTo: null, price: 10 }],
+      output: [{ upTo: 200000, price: 25 }, { upTo: null, price: 37.50 }],
+      cache: {
+        cType: 'ant-bp',
+        read: [{ upTo: 200000, price: 0.50 }, { upTo: null, price: 1.00 }],
+        write: [{ upTo: 200000, price: 6.25 }, { upTo: null, price: 12.50 }],
+        duration: 300,
+      },
+    },
     benchmark: { cbaElo: 1466 }, // claude-opus-4-5-20251101
   },
   {

@@ -489,6 +489,75 @@ export function findModelsServiceOrNull<TServiceSettings extends object>(service
   return llmsStoreState().sources.find(s => s.id === serviceId) ?? null;
 }
 
+/**
+ * Gets the Anthropic API host from a model's service configuration.
+ * Returns undefined if the model is not from Anthropic or if no custom host is configured.
+ */
+export function getAnthropicHostFromLLM(llm: DLLM | null): string | undefined {
+  if (!llm || llm.vId !== 'anthropic') return undefined;
+
+  const service = findModelsServiceOrNull<{ anthropicHost?: string }>(llm.sId);
+  return service?.setup?.anthropicHost || undefined;
+}
+
+/**
+ * Known proxy context window limits (when they differ from official Anthropic API).
+ * Maps normalized hostname to max context window in tokens.
+ *
+ * These proxies don't support the 1M context window beta feature, even though
+ * they accept the anthropic-beta header. Tested empirically.
+ */
+const PROXY_CONTEXT_LIMITS: Record<string, number> = {
+  'api.kiro.cheap': 200000, // Tested: accepts up to ~210k, model complains at ~220k
+  'dev.aiprime.store': 200000, // Also limited to 200k
+} as const;
+
+/**
+ * Gets the effective context window for a model, accounting for:
+ * - Model's base context window (e.g., 200k)
+ * - 1M context parameter (llmVndAnt1MContext) if enabled
+ * - Proxy-specific limitations that override the 1M setting
+ *
+ * This ensures the UI shows accurate limits and prevents sending requests
+ * that will be rejected by proxies with lower limits than the official API.
+ *
+ * @param llm The LLM model to check
+ * @returns Effective context window in tokens
+ */
+export function getEffectiveContextWindow(llm: DLLM | null): number {
+  if (!llm) return 200000; // default fallback
+
+  const baseContextWindow = llm.contextTokens || 200000;
+
+  // Only Anthropic models support 1M context
+  if (llm.vId !== 'anthropic') return baseContextWindow;
+
+  // Check if 1M context is enabled in user parameters
+  const has1MEnabled = llm.userParameters?.llmVndAnt1MContext === true;
+  if (!has1MEnabled) return baseContextWindow;
+
+  // Get the proxy host
+  const anthropicHost = getAnthropicHostFromLLM(llm);
+
+  // If using official Anthropic API (no custom host), 1M is supported
+  if (!anthropicHost) return 1000000;
+
+  // Check if this proxy has known limitations
+  const normalizedHost = anthropicHost.toLowerCase()
+    .replace(/^https?:\/\//, '')
+    .replace(/\/.*$/, '') // remove path
+    .replace(/:\d+$/, ''); // remove port
+
+  const proxyLimit = PROXY_CONTEXT_LIMITS[normalizedHost];
+  if (proxyLimit !== undefined) {
+    // Proxy has a known limit - use it instead of 1M
+    return proxyLimit;
+  }
+
+  // Unknown proxy - assume it supports 1M (optimistic)
+  return 1000000;
+}
+
 export function getChatLLMId(): DLLMId | null {
   return getDomainModelConfiguration('primaryChat', true, true)?.modelId ?? null;
 }

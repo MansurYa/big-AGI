@@ -12,7 +12,7 @@ import { RequestRetryError } from '../chatGenerate.retrier';
 
 // configuration
 const ANTHROPIC_DEBUG_EVENT_SEQUENCE = false; // true: shows the sequence of events
-const ANTHROPIC_DEBUG_RAW_EVENTS = true; // true: logs full RAW events for proxy debugging
+const ANTHROPIC_DEBUG_RAW_EVENTS = false; // true: logs full RAW events for proxy debugging
 // NOTE: the following weakens protocol validation - remove if possible. testing with web search active to see if blocks come out of order
 const ANTHROPIC_FIX_REUSED_BLOCK_INDEX = true; // [Anthropic, 2026-01-12] Block Start Index issue workaround
 

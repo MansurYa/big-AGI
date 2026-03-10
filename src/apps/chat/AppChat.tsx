@@ -19,6 +19,7 @@ import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal'
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { ErrorBoundary } from '~/common/components/ErrorBoundary';
 import { getLLMContextTokens, LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
+import { getEffectiveContextWindow } from '~/common/stores/llms/store-llms';
 import { OptimaDrawerIn, OptimaPanelIn, OptimaToolbarIn } from '~/common/layout/optima/portals/OptimaPortalsIn';
 import { PanelResizeInset } from '~/common/components/PanelResizeInset';
 import { Release } from '~/common/app.release';
@@ -708,7 +709,7 @@ export function AppChat() {
                   conversationHandler={_paneChatHandler}
                   capabilityHasT2I={capabilityHasT2I}
                   chatLLMAntPromptCaching={chatLLM?.interfaces?.includes(LLM_IF_ANT_PromptCaching) ?? false}
-                  chatLLMContextTokens={getLLMContextTokens(chatLLM) ?? null}
+                  chatLLMContextTokens={getEffectiveContextWindow(chatLLM)}
                   chatLLMSupportsImages={chatLLM?.interfaces?.includes(LLM_IF_OAI_Vision) ?? false}
                   fitScreen={isMobile || isMultiPane}
                   isMobile={isMobile}

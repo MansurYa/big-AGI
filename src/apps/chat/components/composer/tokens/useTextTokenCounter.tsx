@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import type { DLLM } from '~/common/stores/llms/llms.types';
+import { getAnthropicHostFromLLM } from '~/common/stores/llms/store-llms';
 import { estimateTextTokens } from '~/common/stores/chat/chat.tokens';
 
 
@@ -63,9 +64,12 @@ export function useTextTokenCount(
       return;
     }
 
+    // Get anthropicHost for proxy token offset calculation
+    const anthropicHost = getAnthropicHostFromLLM(llm);
+
     // [HEAVY] compute tokens
     const newTextTokens = !currentText ? 0
-      : estimateTextTokens(currentText, llm, 'useTextTokenCount');
+      : estimateTextTokens(currentText, llm, 'useTextTokenCount', anthropicHost);
 
     // only update state if changed
     if (newTextTokens !== lastTokenCountRef.current) {
