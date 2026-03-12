@@ -244,7 +244,7 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
 
   // DEBUG: Log tools being sent to proxy
   if (payload.tools?.length) {
-    console.log('[Anthropic] Sending tools:', payload.tools.map(t => t.type || t.name).join(', '));
+    console.log('[Anthropic] Sending tools:', payload.tools.map(t => (t as any).type || (t as any).name).join(', '));
   } else {
     console.log('[Anthropic] No tools in request');
   }

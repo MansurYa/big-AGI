@@ -323,7 +323,42 @@ Invalid input: expected string, received undefined
 console.warn(`[Anthropic Parser] Unexpected input_json_delta for block type '${contentBlock.type}' at index ${index} - ignoring`);
 ```
 
-#### 4. `<thinking>` Tags Leaking into Chat Titles
+#### 4. Connection Reset (ECONNRESET) During Streaming
+
+**Problem:** Proxy closes TCP connection mid-stream, causing `ECONNRESET` errors and `uncaughtException` in Node.js.
+
+**Error:**
+```
+[Error: aborted] { code: 'ECONNRESET' }
+⨯ uncaughtException: [Error: aborted] { code: 'ECONNRESET' }
+Failed to set fetch cache https://api.kiro.cheap/v1/messages ResponseAborted
+```
+
+**Fix Location:** `src/modules/aix/server/dispatch/chatGenerate/chatGenerate.executor.ts`
+
+**Solution:**
+- Detect connection errors (ECONNRESET, ETIMEDOUT, ECONNREFUSED, EHOSTUNREACH, ENOTFOUND) during streaming
+- Automatically retry with exponential backoff (1s, 2s, 4s) if retries available
+- Show user-friendly error message if retries exhausted
+
+```typescript
+// In _consumeDispatchStream and _consumeDispatchUnified catch blocks:
+const errorCode = error?.code || error?.cause?.code;
+const isConnectionError = errorCode && ['ECONNRESET', ...].includes(errorCode);
+
+if (isConnectionError && parseContext?.retriesAvailable) {
+  throw new RequestRetryError(`Connection lost during streaming: ${errorCode}`, {
+    causeConn: errorCode,
+  });
+}
+```
+
+**User Experience:**
+- Transparent retry: User sees retry indicator in UI
+- If all retries fail: Clear error message explaining proxy timeout/network issue
+- No more uncaught exceptions or cryptic ECONNRESET errors
+
+#### 5. `<thinking>` Tags Leaking into Chat Titles
 
 **Problem:** Proxies may return thinking content as text with `<thinking>` tags instead of proper `thinking` blocks, causing tags to appear in auto-generated chat titles.
 
@@ -343,7 +378,7 @@ title = title
   ?.trim()
 ```
 
-#### 5. Proxy `exception` Events
+#### 6. Proxy `exception` Events
 
 **Problem:** Some proxies send `exception` events instead of standard `error` events.
 
@@ -355,6 +390,32 @@ case 'exception':
   const exceptionText = exceptionData.exception_message || exceptionData.raw_data?.message || 'Unknown exception';
   return pt.setDialectTerminatingIssue(`Proxy error: ${exceptionText}`, IssueSymbols.Generic, 'srv-warn');
 ```
+
+#### 7. Inaccurate Image Token Estimation (2026-02-21)
+
+**Problem:** Token calculator severely underestimated image token costs for Anthropic models, showing 87k available tokens when context window was actually full. With 19 images in chat, old formula estimated ~30k tokens but real cost was 100k+ tokens.
+
+**Error:**
+```
+▶ 87,757 available message tokens  // WRONG - context actually full
+History: 80,137 tokens              // Severely underestimated images
+```
+
+**Fix Location:** `src/common/tokens/tokens.image.ts`
+
+**Solution:** Updated Anthropic image token calculation formula:
+- **Old formula:** `(width × height) / 750`, capped at 1,600 tokens
+- **New formula:** `(width × height) / 400`, capped at 8,000 tokens
+- **Fallback:** 4,000 tokens (was 1,600) when dimensions unknown
+
+**Impact:**
+```
+1568×1568 image: 1,600 → 6,147 tokens (+4,547)
+1092×1092 image: 1,590 → 2,981 tokens (+1,391)
+19 images total: 30,400 → 116,793 tokens (+86,393)
+```
+
+**Rationale:** Real-world token costs from Anthropic API are significantly higher than initial estimates. Conservative estimates prevent unexpected context limit hits and "context window exceeded" errors.
 
 ### WebSearch with Custom Proxies
 

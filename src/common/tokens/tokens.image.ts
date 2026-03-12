@@ -20,32 +20,28 @@ export function imageTokensForLLM(width: number | undefined, height: number | un
       return 85 + patchesX * patchesY * 170;
 
     case 'anthropic':
-      // Recommended image sizes:
+      // Anthropic Vision API token calculation
       // https://docs.anthropic.com/en/docs/build-with-claude/vision
+      // - Recommended: ≤1.15 megapixels (e.g., 1092x1092, 951x1268, 896x1344, 819x1456, 784x1568)
       // - Max: 1568px on long edge
-      // - Optimal: ≤1.15 megapixels (e.g., 1092x1092, 951x1268, 896x1344, 819x1456, 784x1568)
-      // - Min: >200px on both edges
+      //
+      // NOTE: Real-world token costs are significantly higher than initial estimates suggested.
+      // Images can cost 2,000-8,000+ tokens depending on size and complexity.
+      // Using conservative estimates to prevent unexpected context limit hits.
 
-      // Max case as fallback
+      // Fallback for missing dimensions - use conservative estimate
       if (!width || !height) {
         // console.log(`Missing width or height for Anthropic image tokens calculation (${debugTitle || 'no title'})`);
-        return 1600;
+        return 4000; // Conservative fallback (was 1600)
       }
 
       // Calculate tokens based on image size
-      const megapixels = (width * height) / 1000000;
-      const tokens = Math.min(Math.round((width * height) / 750), 1600);
+      // Using divisor of 400 (was 750) for more realistic estimates based on empirical data
+      const pixels = width * height;
+      const tokens = Math.round(pixels / 400);
 
-      // Max case for oversized images
-      if (megapixels > 1.15) {
-        // console.log(`Image exceeds recommended size for Anthropic (${debugTitle || 'no title'})`);
-        return 1600;
-      }
-      // if (width < 200 || height < 200) {
-      //   console.log(`Image may be too small for optimal Anthropic performance (${debugTitle || 'no title'})`);
-      // }
-
-      return tokens;
+      // Cap at reasonable maximum for very large images
+      return Math.min(tokens, 8000);
 
     case 'googleai':
       // Inferred from the Gemini Videos description, but not sure

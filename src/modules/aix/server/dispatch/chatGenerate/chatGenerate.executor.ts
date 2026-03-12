@@ -166,9 +166,24 @@ async function* _consumeDispatchUnified(
     chatGenerateTx.setEnded('done-dispatch-closed');
 
   } catch (error: any) {
-    if (dispatchBody === undefined)
-      chatGenerateTx.setRpcTerminatingIssue('dispatch-read', `**[Reading Issue] ${_d.prettyDialect}**: ${safeErrorString(error) || 'Unknown stream reading error'}`, 'srv-warn');
-    else
+    // Handle connection errors during non-streaming read (ECONNRESET, ETIMEDOUT, etc.)
+    const errorCode = error?.code || error?.cause?.code;
+    const isConnectionError = errorCode && ['ECONNRESET', 'ETIMEDOUT', 'ECONNREFUSED', 'EHOSTUNREACH', 'ENOTFOUND'].includes(errorCode);
+
+    if (isConnectionError && parseContext?.retriesAvailable && dispatchBody === undefined) {
+      console.log(`[Aix.${_d.prettyDialect}] Connection error during non-streaming read: ${errorCode} - will retry`);
+      // Throw retryable error to trigger operation-level retry
+      throw new RequestRetryError(`Connection lost during read: ${errorCode}`, {
+        causeConn: errorCode,
+      });
+    }
+
+    if (dispatchBody === undefined) {
+      const errorMessage = isConnectionError
+        ? `Connection error (${errorCode}): The server closed the connection unexpectedly. This may be due to proxy timeout or network issues.`
+        : safeErrorString(error) || 'Unknown stream reading error';
+      chatGenerateTx.setRpcTerminatingIssue('dispatch-read', `**[Reading Issue] ${_d.prettyDialect}**: ${errorMessage}`, 'srv-warn');
+    } else
       chatGenerateTx.setRpcTerminatingIssue('dispatch-parse', ` **[Parsing Issue] ${_d.prettyDialect}**: ${safeErrorString(error) || 'Unknown stream parsing error'}.\n\nInput data: ${objectDeepCloneWithStringLimit(dispatchBody, 'aix.parsing-issue', 2048)}.\n\nPlease open a support ticket on GitHub.`, 'srv-warn');
   }
 }
@@ -240,8 +255,24 @@ async function* _consumeDispatchStream(
         break; // outer do {}
       }
 
+      // Handle connection errors during streaming (ECONNRESET, ETIMEDOUT, etc.)
+      // These are retryable if we have retries available
+      const errorCode = error?.code || error?.cause?.code;
+      const isConnectionError = errorCode && ['ECONNRESET', 'ETIMEDOUT', 'ECONNREFUSED', 'EHOSTUNREACH', 'ENOTFOUND'].includes(errorCode);
+
+      if (isConnectionError && parseContext?.retriesAvailable) {
+        console.log(`[Aix.${_d.prettyDialect}] Connection error during streaming: ${errorCode} - will retry`);
+        // Throw retryable error to trigger operation-level retry
+        throw new RequestRetryError(`Connection lost during streaming: ${errorCode}`, {
+          causeConn: errorCode,
+        });
+      }
+
       // Handle abnormal stream termination; print to the server console as well (important to debug)
-      chatGenerateTx.setRpcTerminatingIssue('dispatch-read', `**[Streaming Issue] ${_d.prettyDialect}**: ${safeErrorString(error) || 'Unknown stream reading error'}`, 'srv-warn');
+      const errorMessage = isConnectionError
+        ? `Connection error (${errorCode}): The server closed the connection unexpectedly. This may be due to proxy timeout or network issues.`
+        : safeErrorString(error) || 'Unknown stream reading error';
+      chatGenerateTx.setRpcTerminatingIssue('dispatch-read', `**[Streaming Issue] ${_d.prettyDialect}**: ${errorMessage}`, 'srv-warn');
       break; // outer do {}
     }
 
