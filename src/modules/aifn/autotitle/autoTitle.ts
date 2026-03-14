@@ -21,6 +21,23 @@ export async function autoConversationTitle(conversationId: string, forceReplace
     return false;
   }
 
+  // Proxy compatibility: if Utility model points to a non-Anthropic ID (e.g. gpt-*),
+  // some Anthropic proxies (e.g. api.kiro.cheap) will error. Fallback to the conversation model.
+  // This is defensive and only affects auto-titling.
+  const isGptModelId = (id: string) => /(^|:)gpt-/i.test(id);
+
+  if (isGptModelId(autoTitleLlmId)) {
+    try {
+      autoTitleLlmId = getDomainModelIdOrThrow(['primaryChat'], false, false, 'conversation-titler-fallback');
+    } catch {
+      // ignore, auto-title is non-critical
+    }
+  }
+
+  // still not safe -> skip auto-title entirely
+  if (isGptModelId(autoTitleLlmId))
+    return false;
+
   // only operate on valid conversations, without any title
   const conversation = getConversation(conversationId);
   if (!conversation || (!forceReplace && (conversation.autoTitle || conversation.userTitle)))

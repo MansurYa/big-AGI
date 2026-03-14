@@ -5,7 +5,16 @@ import type { IModelVendor } from '../IModelVendor';
 
 
 // special symbols
-export const isValidAnthropicApiKey = (apiKey?: string) => !!apiKey && (apiKey.startsWith('sk-') ? apiKey.length >= 39 : apiKey.length > 1);
+export const isValidAnthropicApiKey = (apiKey?: string, anthropicHost?: string | null) => {
+  if (!apiKey) return false;
+
+  // [Proxy compatibility] For custom hosts (e.g. api.kiro.cheap), accept any non-empty key
+  // Custom proxies may use different key formats than official Anthropic API
+  if (anthropicHost) return apiKey.length > 0;
+
+  // For official Anthropic API, validate standard key format (sk-ant-... with length ≥39)
+  return apiKey.startsWith('sk-') ? apiKey.length >= 39 : apiKey.length > 1;
+};
 
 interface DAnthropicServiceSettings {
   anthropicKey: string;

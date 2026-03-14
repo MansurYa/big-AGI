@@ -140,7 +140,7 @@ export const DModelParameterRegistry = {
     label: 'Effort',
     type: 'enum' as const,
     description: 'Controls token usage vs. thoroughness trade-off. Works alongside thinking budget.',
-    values: ['low', 'medium', 'high'] as const,
+    values: ['low', 'medium', 'high', 'max'] as const,
     // No initialValue - undefined means high effort (default, equivalent to omitting the parameter)
   } as const,
 

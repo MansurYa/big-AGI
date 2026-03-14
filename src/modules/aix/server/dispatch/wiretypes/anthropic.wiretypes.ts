@@ -846,9 +846,10 @@ export namespace AnthropicWire_API_Message_Create {
     /**
      * [Anthropic, effort-2025-11-24] Output configuration for effort-based token control.
      * Allows trading off response thoroughness for efficiency (Claude Opus 4.5+ only).
+     * Max effort level added for Claude Opus 4.6.
      */
     output_config: z.object({
-      effort: z.enum(['low', 'medium', 'high']).optional(),
+      effort: z.enum(['low', 'medium', 'high', 'max']).optional(),
     }).optional(),
 
     /**

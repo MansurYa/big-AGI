@@ -39,7 +39,7 @@ export function AnthropicServiceSetup(props: { serviceId: DModelsServiceId }) {
   const needsUserKey = !serviceHasCloudTenantConfig;
   const showAdvanced = advanced.on || !!clientSideFetch;
 
-  const keyValid = isValidAnthropicApiKey(anthropicKey);
+  const keyValid = isValidAnthropicApiKey(anthropicKey, anthropicHost);
   const keyError = (/*needsUserKey ||*/ !!anthropicKey) && !keyValid;
   const shallFetchSucceed = anthropicKey ? keyValid : (!needsUserKey || !!anthropicHost);
 

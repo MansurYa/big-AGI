@@ -242,12 +242,14 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
   }
 
 
-  // DEBUG: Log tools being sent to proxy
+  // DEBUG: Log tools + thinking being sent upstream
   if (payload.tools?.length) {
     console.log('[Anthropic] Sending tools:', payload.tools.map(t => (t as any).type || (t as any).name).join(', '));
   } else {
     console.log('[Anthropic] No tools in request');
   }
+  console.log('[Anthropic] Model:', payload.model);
+  console.log('[Anthropic] Thinking:', payload.thinking ? (payload.thinking.type === 'enabled' ? `enabled(${payload.thinking.budget_tokens})` : 'disabled') : 'not-sent');
 
   // Preemptive error detection with server-side payload validation before sending it upstream
   const validated = AnthropicWire_API_Message_Create.Request_schema.safeParse(payload);

@@ -103,7 +103,23 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
           return AnthropicWire_API_Models_List.Response_schema.parse(wireModels);
         },
         convertToDescriptions: (wireModelsResponse) => {
-          const { data: availableModels } = wireModelsResponse;
+          let { data: availableModels } = wireModelsResponse;
+
+          // [Proxy compatibility] Some third-party "Anthropic" proxies may return non-Claude model IDs
+          // (e.g. OpenAI/ChatGPT models like "gpt-5.4"). Those will later fail on /v1/messages.
+          // Apply a narrow filter only for api.kiro.cheap to prevent selecting incompatible models.
+          // NOTE: access.anthropicHost may be null when host is provided via env; check both.
+          const antHost = ((access as any)?.anthropicHost || process.env.ANTHROPIC_API_HOST) as (string | null | undefined);
+          if (antHost && antHost.includes('api.kiro.cheap')) {
+            availableModels = availableModels.filter(m => typeof m?.id === 'string' && m.id.startsWith('claude-'));
+
+            // [Proxy compatibility] Normalize model IDs: convert dots to dashes (e.g. claude-opus-4.6 → claude-opus-4-6)
+            // This ensures variant injection works correctly (thinking variants, etc.)
+            availableModels = availableModels.map(m => ({
+              ...m,
+              id: m.id.replace(/\./g, '-'),
+            }));
+          }
 
           // [DEV] check for stale/unknown model definitions
           anthropicValidateModelDefs_DEV(availableModels);

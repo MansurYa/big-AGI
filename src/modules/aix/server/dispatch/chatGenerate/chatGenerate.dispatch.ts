@@ -51,7 +51,14 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
   switch (dialect) {
     case 'anthropic': {
 
+      // [Proxy compatibility] api.kiro.cheap sometimes exposes non-Claude model IDs (e.g. gpt-*).
+      // Those will fail on /v1/messages. Fail fast with a clear error.
+      const antHost = ((access as any)?.anthropicHost || process.env.ANTHROPIC_API_HOST || '') as string;
+      if (antHost.includes('api.kiro.cheap') && !model.id.startsWith('claude-'))
+        throw new Error(`Anthropic proxy (api.kiro.cheap): incompatible model id '${model.id}'. Please select a Claude model (id starts with 'claude-') in Models Setup.`);
+
       // [Anthropic, 2025-11-24] Detect if any tool uses Programmatic Tool Calling features (allowed_callers, input_examples)
+
       const usesProgrammaticToolCalling = chatGenerate.tools?.some(tool =>
           tool.type === 'function_call' && (
             tool.function_call.allowed_callers?.includes('code_execution') ||

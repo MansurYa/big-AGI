@@ -138,6 +138,7 @@ const _antWebFetchOptions = [
 ] as const;
 
 const _antEffortOptions = [
+  { value: 'max', label: 'Max', description: 'Highest quality (Opus 4.6 only)' },
   { value: 'high', label: 'High', description: 'Maximum capability' },
   { value: 'medium', label: 'Medium', description: 'Balanced speed and quality' },
   { value: 'low', label: 'Low', description: 'Fastest, most efficient' },
