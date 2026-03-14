@@ -7,6 +7,12 @@
 /supabase/
 /*.sql
 
+# Local research materials
+/references/
+
+# Local one-off docs (not part of repo)
+/ТЕХНИЧЕСКОЕ ЗАДАНИЕ ДЛЯ АВТОНОМНОЙ РАЗРАБОТКИ.md
+
 # dependencies
 /node_modules
 /.pnp
@@ -46,6 +52,8 @@ next-env.d.ts
 
 # other
 .idea/
+*.swp
+*.swo
 
 # Ingore k8s/env-secret.yaml
 ./k8s/env-secret.yaml

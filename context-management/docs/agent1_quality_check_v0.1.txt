@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/Users/mansurzainullin/MyCode/big-AGI/context-management/tests/manual/test_agent1_quality.py", line 5, in <module>
+    from src.agents.agent1_selector import Agent1Selector
+ModuleNotFoundError: No module named 'src'
