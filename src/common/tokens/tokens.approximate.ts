@@ -162,9 +162,13 @@ function countSpaces(text: string): number {
 }
 
 /**
- * Detects proxy-specific token offset based on API host
+ * Detects proxy-specific token offset based on API host.
+ * This should be called ONCE per conversation, not per fragment.
+ *
+ * @param apiHost - API host URL
+ * @returns Token offset for the proxy (e.g., 2400 for api.kiro.cheap)
  */
-function getProxyTokenOffset(apiHost: string | undefined): number {
+export function getProxyTokenOffset(apiHost: string | undefined): number {
   if (!apiHost) return 0;
 
   // Normalize host (remove protocol and trailing slashes)
@@ -187,7 +191,7 @@ function getProxyTokenOffset(apiHost: string | undefined): number {
  * @param text - The text to count tokens for
  * @param llm - The LLM model configuration
  * @param debugFrom - Debug label for logging
- * @param apiHost - Optional API host to detect proxy-specific offsets (for Anthropic proxies)
+ * @param apiHost - Optional API host (currently unused - proxy offset moved to conversation level)
  */
 export function approximateTextTokens(text: string, llm: DLLM, debugFrom: string, apiHost?: string): number {
   if (!text) return 0;
@@ -235,12 +239,9 @@ export function approximateTextTokens(text: string, llm: DLLM, debugFrom: string
   const adjustedTokens = baseTokens - spaceAdjustment + lengthAdjustment; // - repetitionReduction;
   let finalCount = Math.max(1, Math.round(adjustedTokens));
 
-  // Add proxy-specific token offset (only for Anthropic models with custom proxies)
-  const proxyOffset = getProxyTokenOffset(apiHost);
-  if (proxyOffset > 0 && modelFamily === 'claude') {
-    finalCount += proxyOffset;
-    DEBUG_TOKEN_COUNT && console.log(`approximateTextTokens: adding proxy offset +${proxyOffset} for host ${apiHost}`);
-  }
+  // NOTE: Proxy offset (e.g., +2400 for api.kiro.cheap) should be added ONCE per conversation,
+  // not per text fragment. Adding it here would multiply it by the number of fragments.
+  // The offset is added at the conversation level in store-chats.ts
 
   DEBUG_TOKEN_COUNT && console.log(
     `approximateTextTokens: ${debugFrom}, family: ${modelFamily}, type: ${contentType}, ` +

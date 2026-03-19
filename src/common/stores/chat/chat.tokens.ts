@@ -92,8 +92,28 @@ function _fragmentTokens(llm: DLLM, role: DMessageRole, fragment: DMessageFragme
       case 'text':
         return estimateTextTokens(cPart.text, llm, debugFrom, anthropicHost);
       case 'tool_invocation':
+        // Tool invocations: count the tool name, id, and JSON args
+        const invocation = cPart.invocation;
+        let invocationText = cPart.id;
+        if (invocation.type === 'function_call') {
+          invocationText += invocation.name + (invocation.args || '{}');
+        } else if (invocation.type === 'code_execution') {
+          invocationText += invocation.code;
+        }
+        return estimateTextTokens(invocationText, llm, debugFrom, anthropicHost);
       case 'tool_response':
-        break; // warn
+        // Tool responses: count the response content
+        const response = cPart.response;
+        let responseText = cPart.id;
+        if (response.type === 'function_call') {
+          responseText += response.name + response.result;
+        } else if (response.type === 'code_execution') {
+          responseText += response.result;
+        }
+        if (cPart.error) {
+          responseText += typeof cPart.error === 'string' ? cPart.error : 'ERROR';
+        }
+        return estimateTextTokens(responseText, llm, debugFrom, anthropicHost);
       default:
         const _exhaustiveCheck: never = cPt;
     }

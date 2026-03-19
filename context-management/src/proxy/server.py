@@ -99,9 +99,25 @@ async def proxy_messages(request: Request):
     categories_to_compress = token_counter.get_categories_needing_compression()
 
     if categories_to_compress:
+        # Add cooldown: don't compress if we just compressed (within last 2 minutes)
+        import time
+        chat_id = body.get('metadata', {}).get('chat_id', 'unknown')
+
         # Compress each category that needs it
         for cat in categories_to_compress:
+            # Check cooldown
+            cooldown_key = f"last_compression_{chat_id}_{cat.name}"
+            last_compression_time = getattr(app.state, cooldown_key, 0)
+            current_time = time.time()
+
+            if current_time - last_compression_time < 120:  # 2 minutes cooldown
+                print(f"[Proxy] Category '{cat.name}' at {cat.fill_percent:.1f}% - skipping (cooldown, last compressed {int(current_time - last_compression_time)}s ago)")
+                continue
+
             print(f"[Proxy] Category '{cat.name}' at {cat.fill_percent:.1f}% - triggering compression")
+
+            # Update last compression time
+            setattr(app.state, cooldown_key, current_time)
 
             # Extract context for this category
             category_messages = [msg for msg in messages if msg.get('category', 'Dialogue') == cat.name]
@@ -164,10 +180,16 @@ async def proxy_messages(request: Request):
             )
 
             # Return response
+            # Remove content-encoding header to avoid double-decoding
+            # (httpx already decoded the response, but header says it's still encoded)
+            response_headers = dict(response.headers)
+            response_headers.pop('content-encoding', None)
+            response_headers.pop('content-length', None)  # Length may be wrong after decoding
+
             return Response(
                 content=response.content,
                 status_code=response.status_code,
-                headers=dict(response.headers)
+                headers=response_headers
             )
 
         except httpx.TimeoutException:

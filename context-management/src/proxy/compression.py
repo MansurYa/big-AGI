@@ -116,7 +116,13 @@ class CompressionOrchestrator:
         total_original = 0
         total_compressed = 0
 
-        for block in selection_result['blocks']:
+        # Limit number of blocks to compress (to avoid excessive time)
+        max_blocks = 3
+        blocks_to_compress = selection_result['blocks'][:max_blocks]
+        if len(selection_result['blocks']) > max_blocks:
+            print(f"[Orchestrator] Limiting to {max_blocks} blocks (from {len(selection_result['blocks'])})")
+
+        for block in blocks_to_compress:
             compression_result = self.agent2.compress_block(
                 context=numbered_context,
                 start_line=block['start_line'],

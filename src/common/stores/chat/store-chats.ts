@@ -19,6 +19,8 @@ import { V3StoreDataToHead, V4ToHeadConverters } from './chats.converters';
 import { conversationTitle, createDConversation, DConversation, DConversationId, duplicateDConversation } from './chat.conversation';
 import { estimateTokensForFragments } from './chat.tokens';
 import { gcChatImageAssets } from '~/common/stores/chat/chat.gc';
+import { getProxyTokenOffset } from '~/common/tokens/tokens.approximate';
+import { getAnthropicHostFromLLM } from '~/common/stores/llms/store-llms';
 
 
 /// Conversations Store
@@ -544,9 +546,26 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
 // Convenience function to update a set of messages, using the current chatLLM
 function updateMessagesTokenCounts(messages: DMessage[], forceUpdate: boolean, debugFrom: string): number {
   const chatLLMId = getChatLLMId();
-  return 3 + messages.reduce((sum, message) => {
+  let baseTokens = 3 + messages.reduce((sum, message) => {
     return 4 + updateMessageTokenCount(message, chatLLMId, forceUpdate, debugFrom) + sum;
   }, 0);
+
+  // Add proxy-specific token offset ONCE per conversation (not per fragment)
+  // Some proxies (e.g., api.kiro.cheap) inject system prompts that add ~2400 tokens
+  if (chatLLMId) {
+    try {
+      const dllm = findLLMOrThrow(chatLLMId);
+      const anthropicHost = getAnthropicHostFromLLM(dllm);
+      const proxyOffset = getProxyTokenOffset(anthropicHost);
+      if (proxyOffset > 0) {
+        baseTokens += proxyOffset;
+      }
+    } catch (e) {
+      // LLM not found, skip proxy offset
+    }
+  }
+
+  return baseTokens;
 }
 
 // Convenience function to count the tokens in a DMessage object

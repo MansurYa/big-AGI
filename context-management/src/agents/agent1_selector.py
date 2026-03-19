@@ -58,6 +58,15 @@ class Agent1Selector:
         Returns:
             Dict with 'blocks' array and 'total_tokens_to_free'
         """
+        # Check context size - if too large, use fallback instead of sliding window
+        # Sliding window breaks block selection because Agent 1 can't see the full context
+        context_tokens = len(self._tokenizer.encode(context))
+        max_context_tokens = 150000  # Safe limit for API
+
+        if context_tokens > max_context_tokens:
+            print(f"[Agent1] Context too large ({context_tokens} tokens), using fallback")
+            return self._fallback_selection(context, need_to_free)
+
         # Wrap context in compressible zone marker
         marked_context = f"<COMPRESSIBLE_ZONE>\n{context}\n</COMPRESSIBLE_ZONE>"
 
@@ -97,7 +106,15 @@ class Agent1Selector:
                 messages=[{"role": "user", "content": msg}],
             )
 
-        response = _call_agent1()
+        try:
+            response = _call_agent1()
+        except Exception as e:
+            error_msg = str(e)
+            # Check if this is a proxy error (context too large)
+            if "too large" in error_msg.lower() or "summarize" in error_msg.lower():
+                print(f"[Agent1] Proxy rejected request (context too large), using fallback")
+                return self._fallback_selection(context, need_to_free)
+            raise
 
         # Extract text response (handle extended thinking)
         response_text = None
@@ -108,6 +125,13 @@ class Agent1Selector:
 
         if response_text is None:
             raise ValueError("No text block found in API response")
+
+        # Check if response is a proxy error message (not JSON)
+        if not response_text.strip().startswith('{') and not response_text.strip().startswith('['):
+            if "summarize" in response_text.lower() or "too large" in response_text.lower():
+                print(f"[Agent1] Proxy returned error message: {response_text[:100]}")
+                return self._fallback_selection(context, need_to_free)
+            # Otherwise continue trying to parse
 
         # Strip markdown code blocks if present
         response_text = self._strip_markdown(response_text)
@@ -339,7 +363,9 @@ class Agent1Selector:
                 except Exception:
                     continue
 
-            raise ValueError(f"Failed to parse JSON response: {e}\nResponse: {last_text}")
+            # If all retries failed, use fallback
+            print(f"[Agent1] Failed to parse JSON after retries, using fallback")
+            return self._fallback_selection(context, need_to_free)
 
     def _normalize_blocks(self, blocks: List[Dict]) -> List[Dict]:
         """Best-effort normalization of block boundaries.
@@ -374,6 +400,70 @@ class Agent1Selector:
         text = re.sub(r'^```(?:json)?\s*\n', '', text, flags=re.MULTILINE)
         text = re.sub(r'\n```\s*$', '', text, flags=re.MULTILINE)
         return text.strip()
+
+    def _fallback_selection(self, context: str, need_to_free: int) -> Dict:
+        """
+        Fallback selection when Agent 1 fails.
+        Uses simple heuristic: select oldest messages (top of context).
+        """
+        print(f"[Agent1] Using fallback selection (simple heuristic)")
+
+        lines = context.split('\n')
+        total_lines = len(lines)
+
+        # Estimate tokens per line
+        context_tokens = len(self._tokenizer.encode(context))
+        tokens_per_line = context_tokens / total_lines if total_lines > 0 else 100
+
+        # Calculate how many tokens to select
+        # To save need_to_free tokens at 4x compression:
+        # If we compress X tokens to X/4, we save 3X/4 tokens
+        # So: 3X/4 = need_to_free → X = need_to_free * 4/3
+        # With 1.5x buffer for less than 4x compression: X = need_to_free * 4/3 * 1.5 = need_to_free * 2.0
+        target_tokens = int(need_to_free * 2.0)
+
+        # Cap at maximum available (leave token-based buffers, not line-based)
+        # Lines can be very long (2k+ tokens/line), so use token buffers
+        buffer_tokens = 10000  # 10k tokens buffer at start and end
+        max_available_tokens = max(0, context_tokens - 2 * buffer_tokens)
+        target_tokens = min(target_tokens, max_available_tokens)
+
+        # Convert to lines
+        target_lines = int(target_tokens / tokens_per_line)
+
+        # Calculate line-based buffers (adaptive to line length)
+        buffer_lines = max(1, int(buffer_tokens / tokens_per_line))
+
+        # Select from start (oldest messages), skip buffer
+        start_line = buffer_lines
+        end_line = min(start_line + target_lines, total_lines - buffer_lines)
+
+        if end_line <= start_line:
+            # Context too small, select most of it (leave 1 line buffer)
+            start_line = 1
+            end_line = max(2, total_lines - 1)
+
+        estimated_tokens = int((end_line - start_line) * tokens_per_line)
+
+        return {
+            'blocks': [
+                {
+                    'start_line': start_line,
+                    'end_line': end_line,
+                    'estimated_tokens': estimated_tokens,
+                    'reasoning': 'Fallback selection: oldest messages (Agent 1 failed)',
+                    'directive': {
+                        'context_mode': 'minimal',
+                        'output_shape': 'tight_paragraph',
+                        'keep': ['formulas', 'numbers', 'code', 'technical terms'],
+                        'drop': ['conversational fluff', 'redundant explanations'],
+                        'importance': 'medium',
+                        'if_over_budget': 'compress more aggressively'
+                    }
+                }
+            ],
+            'total_tokens_to_free': estimated_tokens // 4  # Assuming 4x compression
+        }
 
     def _check_overlaps(self, blocks: List[Dict]):
         """Check if any blocks overlap"""

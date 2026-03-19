@@ -137,12 +137,41 @@ def count_tokens_by_category(messages: List[Dict], tokenizer: Optional[TokenCoun
 
     for message in messages:
         content = message.get('content', '')
+
+        # Handle multi-part content (text + images + tool calls)
         if isinstance(content, list):
-            # Handle multi-part content (text + images)
-            content = ' '.join([
-                part.get('text', '') if isinstance(part, dict) else str(part)
-                for part in content
-            ])
+            text_parts = []
+            for part in content:
+                if isinstance(part, dict):
+                    # Text content
+                    if 'text' in part:
+                        text_parts.append(part['text'])
+                    # Tool use (function call invocation)
+                    elif part.get('type') == 'tool_use':
+                        # Count tool name, id, and input JSON
+                        tool_text = f"{part.get('id', '')}{part.get('name', '')}"
+                        if 'input' in part:
+                            import json
+                            tool_text += json.dumps(part['input'])
+                        text_parts.append(tool_text)
+                    # Tool result (function call response)
+                    elif part.get('type') == 'tool_result':
+                        # Count tool_use_id and content
+                        result_text = part.get('tool_use_id', '')
+                        tool_content = part.get('content', '')
+                        if isinstance(tool_content, list):
+                            result_text += ' '.join([
+                                item.get('text', '') if isinstance(item, dict) else str(item)
+                                for item in tool_content
+                            ])
+                        else:
+                            result_text += str(tool_content)
+                        if part.get('is_error'):
+                            result_text += ' ERROR'
+                        text_parts.append(result_text)
+                else:
+                    text_parts.append(str(part))
+            content = ' '.join(text_parts)
 
         category = extract_category_from_message(message)
         tokens = tokenizer.count_tokens(str(content))

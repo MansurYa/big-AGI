@@ -87,6 +87,14 @@ export function AnthropicServiceSetup(props: { serviceId: DModelsServiceId }) {
       </Typography>
     </FormControl>}
 
+    {showAdvanced && <FormSwitchControl
+      title='Context Management Proxy' on='Enabled' off='Disabled'
+      tooltip='Automatically compresses conversation context when it reaches capacity limits. Requires local proxy server running on port 8000.'
+      description={anthropicHost === 'http://localhost:8000' ? <>Proxy: localhost:8000</> : 'Disabled'}
+      checked={anthropicHost === 'http://localhost:8000'}
+      onChange={enabled => updateSettings({ anthropicHost: enabled ? 'http://localhost:8000' : '' })}
+    />}
+
     {showAdvanced && <FormTextField
       autoCompleteId='anthropic-host'
       title='API Host'

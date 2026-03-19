@@ -85,7 +85,7 @@ class Agent2Compressor:
           - Manual tests may look "hung" when the network call stalls.
           - We support a best-effort per-request timeout via env AGENT2_TIMEOUT_S.
         """
-        timeout_s = float(os.getenv("AGENT2_TIMEOUT_S", "120"))
+        timeout_s = float(os.getenv("AGENT2_TIMEOUT_S", "600"))  # 10 minutes for slow proxies
 
         # Keep generation bounded; large max_tokens often increases latency and proxy timeouts.
         # Caller supplies a per-request cap.
