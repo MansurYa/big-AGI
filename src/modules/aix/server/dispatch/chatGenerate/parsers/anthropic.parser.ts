@@ -114,6 +114,63 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
       });
     }
 
+    // [PROXY COMPATIBILITY] Error-first parsing for events without eventName
+    // This handles cases where SSE demuxer recovers incomplete events (e.g., after ECONNRESET)
+    // or when proxies send errors in non-standard format without proper event: field
+    if (!eventName || eventName === undefined) {
+      try {
+        const payload = JSON.parse(eventData);
+
+        // Check for error structure: {"type":"error","error":{...}} or {"error":{...}}
+        if (payload.type === 'error' || payload.error) {
+          hasErrored = true;
+          const errorObj = payload.error || payload;
+          const errorType = errorObj.type || 'unknown';
+          const errorMessage = errorObj.message || safeErrorString(errorObj) || 'Unknown proxy error';
+
+          console.log(`[Anthropic Parser] Recovered error event without eventName: ${errorType}`);
+
+          // Check if retryable (same logic as 'error' event case)
+          const isRetryableError = ['overloaded_error', 'rate_limit_error', 'api_error'].includes(errorType);
+
+          if (isRetryableError && context?.retriesAvailable) {
+            console.log(`[Aix.Anthropic] Can retry recovered error '${errorType}: ${errorMessage}'`);
+            const errorTypeToHttpStatus: Record<string, number> = {
+              'rate_limit_error': 429,
+              'api_error': 500,
+              'overloaded_error': 529,
+            };
+            throw new RequestRetryError(`retrying Anthropic: ${errorType}: ${errorMessage}`, {
+              causeHttp: errorTypeToHttpStatus[errorType],
+              causeConn: errorType,
+            });
+          }
+
+          // Non-retryable or no retries left
+          return pt.setDialectTerminatingIssue(
+            `Proxy error: ${errorMessage}`,
+            IssueSymbols.Generic,
+            'srv-warn'
+          );
+        }
+
+        // Not an error structure - log and ignore
+        console.warn('[Anthropic Parser] Event without eventName (non-error):', {
+          payloadType: payload.type,
+          dataPreview: eventData.substring(0, 200),
+        });
+        return; // Ignore unknown event without crashing
+
+      } catch (parseError) {
+        // Not JSON or parsing failed - log and ignore
+        console.warn('[Anthropic Parser] Malformed event without eventName:', {
+          parseError: safeErrorString(parseError),
+          dataPreview: eventData.substring(0, 200),
+        });
+        return; // Ignore malformed event
+      }
+    }
+
     switch (eventName) {
       // Ignore pings
       case 'ping':
@@ -637,8 +694,18 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
         return pt.setDialectTerminatingIssue(`Proxy error: ${exceptionText}`, IssueSymbols.Generic, 'srv-warn');
 
       default:
-        if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log(`ant unknown event: ${eventName}`);
-        aixResilientUnknownValue('Anthropic', 'eventName', eventName);
+        // [PROXY COMPATIBILITY] Tolerant handling of unknown event names
+        // Log for debugging but don't crash - may be proxy-specific or future Anthropic features
+        console.warn(`[Anthropic Parser] Unknown event: ${eventName}`, {
+          dataPreview: eventData?.substring(0, 200),
+        });
+
+        // In strict mode (dev), still call resilience handler for visibility
+        if (process.env.NODE_ENV === 'development') {
+          aixResilientUnknownValue('Anthropic', 'eventName', eventName);
+        }
+
+        // Don't crash in production - just ignore unknown events
         break;
     }
   }

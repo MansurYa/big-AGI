@@ -1,0 +1,87 @@
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying 104.20.30.247:443...
+* Connected to api.kiro.cheap (104.20.30.247) port 443
+* ALPN: curl offers h2,http/1.1
+* (304) (OUT), TLS handshake, Client hello (1):
+} [319 bytes data]
+*  CAfile: /etc/ssl/cert.pem
+*  CApath: none
+* (304) (IN), TLS handshake, Server hello (2):
+{ [122 bytes data]
+* (304) (IN), TLS handshake, Unknown (8):
+{ [19 bytes data]
+* (304) (IN), TLS handshake, Certificate (11):
+{ [2523 bytes data]
+* (304) (IN), TLS handshake, CERT verify (15):
+{ [80 bytes data]
+* (304) (IN), TLS handshake, Finished (20):
+{ [36 bytes data]
+* (304) (OUT), TLS handshake, Finished (20):
+} [36 bytes data]
+* SSL connection using TLSv1.3 / AEAD-CHACHA20-POLY1305-SHA256
+* ALPN: server accepted h2
+* Server certificate:
+*  subject: CN=kiro.cheap
+*  start date: Feb  6 20:27:10 2026 GMT
+*  expire date: May  7 21:24:58 2026 GMT
+*  subjectAltName: host "api.kiro.cheap" matched cert's "*.kiro.cheap"
+*  issuer: C=US; O=Google Trust Services; CN=WE1
+*  SSL certificate verify ok.
+* using HTTP/2
+* [HTTP/2] [1] OPENED stream for https://api.kiro.cheap/v1/messages
+* [HTTP/2] [1] [:method: POST]
+* [HTTP/2] [1] [:scheme: https]
+* [HTTP/2] [1] [:authority: api.kiro.cheap]
+* [HTTP/2] [1] [:path: /v1/messages]
+* [HTTP/2] [1] [user-agent: curl/8.4.0]
+* [HTTP/2] [1] [accept: */*]
+* [HTTP/2] [1] [content-type: application/json]
+* [HTTP/2] [1] [x-api-key: sk-aw-f157875b77785becb3514fb6ae770e50]
+* [HTTP/2] [1] [anthropic-version: 2023-06-01]
+* [HTTP/2] [1] [content-length: 144]
+> POST /v1/messages HTTP/2
+> Host: api.kiro.cheap
+> User-Agent: curl/8.4.0
+> Accept: */*
+> Content-Type: application/json
+> x-api-key: sk-aw-f157875b77785becb3514fb6ae770e50
+> anthropic-version: 2023-06-01
+> Content-Length: 144
+> 
+} [144 bytes data]
+< HTTP/2 400 
+< date: Sat, 21 Mar 2026 13:46:25 GMT
+< content-type: application/json; charset=utf-8
+< content-length: 161
+< server: cloudflare
+< vary: Origin
+< access-control-expose-headers: X-Request-Id
+< x-ratelimit-limit: 200
+< x-ratelimit-remaining: 198
+< x-ratelimit-reset: 14
+< access-control-allow-origin: https://kiro.cheap
+< access-control-allow-credentials: true
+< cf-cache-status: DYNAMIC
+< strict-transport-security: max-age=15552000; includeSubDomains
+< x-content-type-options: nosniff
+< report-to: {"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=LPT%2BUwX9PWaGvLBQEx%2F%2FK0smEA4FNdZiXKxC9%2FfuDtr4s8sPlI8UtiTW48sXiviu%2BSjywZ4MGUqxklX5XxZOL73R2IVLpLwE2vO79A%3D%3D"}]}
+< nel: {"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}
+< cf-ray: 9dfd6713bf3bf5b0-AMS
+< alt-svc: h3=":443"; ma=86400
+< 
+{ [161 bytes data]
+100   305  100   161  100   144    520    465 --:--:-- --:--:-- --:--:--   983100   305  100   161  100   144    519    464 --:--:-- --:--:-- --:--:--   983
+* Connection #0 to host api.kiro.cheap left intact
+{"type":"error","error":{"type":"invalid_request_error","message":"Model \"invalid-model-name-12345\" is not available. Check /v1/models for supported models."}}* URL rejected: Malformed input to a URL function
+* Closing connection
+curl: (3) URL rejected: Malformed input to a URL function
+* URL rejected: Malformed input to a URL function
+* Closing connection
+curl: (3) URL rejected: Malformed input to a URL function
+* URL rejected: Malformed input to a URL function
+* Closing connection
+curl: (3) URL rejected: Malformed input to a URL function
+* URL rejected: Malformed input to a URL function
+* Closing connection
+curl: (3) URL rejected: Malformed input to a URL function

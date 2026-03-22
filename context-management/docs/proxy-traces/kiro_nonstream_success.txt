@@ -1,0 +1,88 @@
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying 104.20.30.247:443...
+* Connected to api.kiro.cheap (104.20.30.247) port 443
+* ALPN: curl offers h2,http/1.1
+* (304) (OUT), TLS handshake, Client hello (1):
+} [319 bytes data]
+*  CAfile: /etc/ssl/cert.pem
+*  CApath: none
+* (304) (IN), TLS handshake, Server hello (2):
+{ [122 bytes data]
+* (304) (IN), TLS handshake, Unknown (8):
+{ [19 bytes data]
+* (304) (IN), TLS handshake, Certificate (11):
+{ [2523 bytes data]
+* (304) (IN), TLS handshake, CERT verify (15):
+{ [79 bytes data]
+* (304) (IN), TLS handshake, Finished (20):
+{ [36 bytes data]
+* (304) (OUT), TLS handshake, Finished (20):
+} [36 bytes data]
+* SSL connection using TLSv1.3 / AEAD-CHACHA20-POLY1305-SHA256
+* ALPN: server accepted h2
+* Server certificate:
+*  subject: CN=kiro.cheap
+*  start date: Feb  6 20:27:10 2026 GMT
+*  expire date: May  7 21:24:58 2026 GMT
+*  subjectAltName: host "api.kiro.cheap" matched cert's "*.kiro.cheap"
+*  issuer: C=US; O=Google Trust Services; CN=WE1
+*  SSL certificate verify ok.
+* using HTTP/2
+* [HTTP/2] [1] OPENED stream for https://api.kiro.cheap/v1/messages
+* [HTTP/2] [1] [:method: POST]
+* [HTTP/2] [1] [:scheme: https]
+* [HTTP/2] [1] [:authority: api.kiro.cheap]
+* [HTTP/2] [1] [:path: /v1/messages]
+* [HTTP/2] [1] [user-agent: curl/8.4.0]
+* [HTTP/2] [1] [accept: */*]
+* [HTTP/2] [1] [content-type: application/json]
+* [HTTP/2] [1] [x-api-key: sk-aw-f157875b77785becb3514fb6ae770e50]
+* [HTTP/2] [1] [anthropic-version: 2023-06-01]
+* [HTTP/2] [1] [content-length: 146]
+> POST /v1/messages HTTP/2
+> Host: api.kiro.cheap
+> User-Agent: curl/8.4.0
+> Accept: */*
+> Content-Type: application/json
+> x-api-key: sk-aw-f157875b77785becb3514fb6ae770e50
+> anthropic-version: 2023-06-01
+> Content-Length: 146
+> 
+} [146 bytes data]
+100   146    0     0  100   146      0    128  0:00:01  0:00:01 --:--:--   128< HTTP/2 200 
+< date: Sat, 21 Mar 2026 13:46:34 GMT
+< content-type: application/json; charset=utf-8
+< content-length: 641
+< server: cloudflare
+< vary: Origin
+< access-control-expose-headers: X-Request-Id
+< x-ratelimit-limit: 200
+< x-ratelimit-remaining: 197
+< x-ratelimit-reset: 6
+< x-request-id: 96dcb19d-d514-41c4-b4e9-7e7b8396b6d0
+< access-control-allow-origin: https://kiro.cheap
+< access-control-allow-credentials: true
+< cf-cache-status: DYNAMIC
+< strict-transport-security: max-age=15552000; includeSubDomains
+< x-content-type-options: nosniff
+< report-to: {"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=BaJmu9i5gAPKBEBc%2BOv9ojDyN3F0lqMFEOgq0rBHqyWH66qkncgBKuBF9xv8qg4HXlLdSwOkdALoC5FT9%2BXRqEXfZC47ZvKeDv5h0Wrw"}]}
+< nel: {"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}
+< cf-ray: 9dfd67449ad6c875-AMS
+< alt-svc: h3=":443"; ma=86400
+< 
+{ [641 bytes data]
+100   787  100   641  100   146    321     73  0:00:02  0:00:01  0:00:01   394100   787  100   641  100   146    321     73  0:00:02  0:00:01  0:00:01   394
+* Connection #0 to host api.kiro.cheap left intact
+{"id":"msg_fdad14a952ca4fbf5ff0af56","type":"message","role":"assistant","content":[{"type":"thinking","thinking":"\nThe user is asking me to say hi. This is a simple greeting request. I should respond in a friendly, warm manner that aligns with my response style - casual, relatable, and welcoming. No technical work is needed here.\n","signature":"sig_4a8d54015195bba68d61bb467918c0d6"},{"type":"text","text":"Hey there. What can I help you with today?"}],"model":"claude-haiku-4.5","stop_reason":"end_turn","stop_sequence":null,"usage":{"input_tokens":2814,"output_tokens":129,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}}* URL rejected: Malformed input to a URL function
+* Closing connection
+curl: (3) URL rejected: Malformed input to a URL function
+* URL rejected: Malformed input to a URL function
+* Closing connection
+curl: (3) URL rejected: Malformed input to a URL function
+* URL rejected: Malformed input to a URL function
+* Closing connection
+curl: (3) URL rejected: Malformed input to a URL function
+* URL rejected: Malformed input to a URL function
+* Closing connection
+curl: (3) URL rejected: Malformed input to a URL function

@@ -1,10 +1,21 @@
 """
 Token counting utilities for context management.
 Supports counting tokens by category and tracking quotas.
+Includes proxy offset and tool descriptions accounting.
 """
+import os
 import tiktoken
 from typing import Dict, List, Optional
 from dataclasses import dataclass
+
+# Proxy offsets for different providers
+PROXY_OFFSETS = {
+    'api.kiro.cheap': 2400,
+    'kiro.cheap': 2400
+}
+
+# MCP tool descriptions occupy approximately 10k tokens
+TOOL_DESCRIPTIONS_TOKENS = 10000
 
 
 @dataclass
@@ -26,8 +37,8 @@ class CategoryQuota:
 
     @property
     def target_after_compression(self) -> int:
-        """Target token count after compression (70% of quota)"""
-        return int(self.quota * 0.70)
+        """Target token count after compression (75% of quota)"""
+        return int(self.quota * 0.75)
 
     @property
     def tokens_to_free(self) -> int:
@@ -117,6 +128,74 @@ def extract_category_from_message(message: Dict) -> str:
         Category name (default: 'Dialogue')
     """
     return message.get('category', 'Dialogue')
+
+
+def get_proxy_offset(api_base_url: str = '') -> int:
+    """
+    Get proxy offset for token counting.
+
+    api.kiro.cheap adds ~2400 tokens of system prompt.
+
+    Args:
+        api_base_url: API base URL
+
+    Returns:
+        Token offset (0 if no proxy, 2400 for kiro.cheap)
+    """
+    if not api_base_url:
+        api_base_url = os.getenv('ANTHROPIC_BASE_URL', '')
+
+    for proxy, offset in PROXY_OFFSETS.items():
+        if proxy in api_base_url:
+            return offset
+
+    return 0
+
+
+def calculate_dynamic_quotas(
+    system_size: int,
+    internet_size: int,
+    buffer_size: int = 30000,
+    api_base_url: str = ''
+) -> Dict[str, int]:
+    """
+    Calculate dynamic quotas for categories.
+
+    Args:
+        system_size: Current size of System category (tokens)
+        internet_size: Current size of Internet category (tokens)
+        buffer_size: Reserved buffer for reasoning (default 30k)
+        api_base_url: API base URL for proxy offset detection
+
+    Returns:
+        Dict mapping category name to quota
+
+    Example:
+        System 2k, Internet 50k, buffer 30k:
+        → Dialogue = 200k - 2.4k - 10k - 2k - 50k - 30k = 105.6k
+    """
+    total_context = 200000  # Claude Opus 4.6
+    proxy_offset = get_proxy_offset(api_base_url)
+    tool_descriptions = TOOL_DESCRIPTIONS_TOKENS
+
+    # Dialogue quota = remainder
+    dialogue_quota = (
+        total_context
+        - proxy_offset
+        - tool_descriptions
+        - system_size
+        - internet_size
+        - buffer_size
+    )
+
+    # Protect against negative values
+    dialogue_quota = max(dialogue_quota, 10000)
+
+    return {
+        'System': system_size,  # Fixed (never compressed)
+        'Internet': internet_size,  # User-defined
+        'Dialogue': dialogue_quota  # Dynamic
+    }
 
 
 def count_tokens_by_category(messages: List[Dict], tokenizer: Optional[TokenCounter] = None) -> Dict[str, int]:

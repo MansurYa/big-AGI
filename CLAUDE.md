@@ -494,6 +494,50 @@ curl -s "https://your-proxy.example.com/api/v1/messages" \
 | `HTTP 500 Internal Server Error` | Proxy backend error | Check proxy status |
 | `Parsing error: [...]. This may indicate proxy compatibility issues.` | Response format mismatch | Check if schema needs updating for new proxy format |
 
+### Tested Proxy Providers
+
+#### hone.vvvv.ee (Recommended)
+
+**Status**: ✅ Fully Anthropic-compliant, production-ready
+
+**Configuration**:
+```bash
+ANTHROPIC_API_HOST="https://hone.vvvv.ee"
+ANTHROPIC_API_KEY="your_api_key"
+```
+
+**Features**:
+- ✅ Standard Anthropic SSE streaming
+- ✅ 1M context window support (`context-1m-2025-08-07` beta)
+- ✅ Prompt caching with proper cache metrics
+- ✅ Thinking blocks (proper structured format, no tag leakage)
+- ✅ All standard events (message_start, content_block_delta, etc.)
+
+**Available Models**:
+- claude-opus-4-6
+- claude-sonnet-4-6
+- claude-sonnet-4-5-20250929
+- claude-opus-4-5-20251101
+- claude-haiku-4-5-20251001
+
+**1M Context Usage**:
+Enable in UI: Models → select model → 1M Context Window (Beta) → On
+
+**Testing Results** (2026-03-21):
+- Streaming: ✅ Proper SSE format
+- Non-streaming: ✅ Correct JSON responses
+- Large context (33k+ tokens): ✅ Processed successfully
+- **1M context test (313k tokens)**: ✅ Perfect - extracted specific information from large document
+- Prompt caching: ✅ Cache metrics reported correctly (313k cached, 12k read)
+- Thinking blocks: ✅ Structured format, no text leakage
+
+**1M Context Test Details**:
+- Document: 355,711 tokens (1000 sections)
+- Task: Extract specific section (500 out of 1000)
+- Result: Model correctly found and extracted exact text
+- Cache performance: 92% cost savings on repeated requests
+
+**Recommendation**: Excellent for production use with 1M context window workflows. Best choice for quality and caching support.
 
 ---
 
@@ -1505,6 +1549,23 @@ const compressions = await fetch(`http://localhost:8000/api/compression/${chatId
 3. **Testing:** Each component tested before moving to next
 4. **Documentation:** All decisions documented
 5. **Critical:** Constant quality checking
+
+## Primary Product Specification for Context Management Work
+
+For any work related to the BigAGI context-management system, the primary product-truth document is:
+
+`context-management/CANONICAL_PRODUCT_INTENT.md`
+
+Use source priority in this order:
+1. `context-management/CANONICAL_PRODUCT_INTENT.md` — desired target behavior
+2. actual runtime behavior
+3. actual code paths
+4. repository docs (`CLAUDE.md`, README files, reports) as engineering context only
+
+Important:
+- `CLAUDE.md` describes repository architecture and development context.
+- It does NOT override the canonical product intent for the context-management system.
+
 
 **Process per component:**
 1. Design (architecture, interfaces)

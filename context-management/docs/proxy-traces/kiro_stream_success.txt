@@ -1,0 +1,242 @@
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying 172.66.160.122:443...
+* Connected to api.kiro.cheap (172.66.160.122) port 443
+* ALPN: curl offers h2,http/1.1
+* (304) (OUT), TLS handshake, Client hello (1):
+} [319 bytes data]
+*  CAfile: /etc/ssl/cert.pem
+*  CApath: none
+* (304) (IN), TLS handshake, Server hello (2):
+{ [122 bytes data]
+* (304) (IN), TLS handshake, Unknown (8):
+{ [19 bytes data]
+* (304) (IN), TLS handshake, Certificate (11):
+{ [2523 bytes data]
+* (304) (IN), TLS handshake, CERT verify (15):
+{ [79 bytes data]
+* (304) (IN), TLS handshake, Finished (20):
+{ [36 bytes data]
+* (304) (OUT), TLS handshake, Finished (20):
+} [36 bytes data]
+* SSL connection using TLSv1.3 / AEAD-CHACHA20-POLY1305-SHA256
+* ALPN: server accepted h2
+* Server certificate:
+*  subject: CN=kiro.cheap
+*  start date: Feb  6 20:27:10 2026 GMT
+*  expire date: May  7 21:24:58 2026 GMT
+*  subjectAltName: host "api.kiro.cheap" matched cert's "*.kiro.cheap"
+*  issuer: C=US; O=Google Trust Services; CN=WE1
+*  SSL certificate verify ok.
+* using HTTP/2
+* [HTTP/2] [1] OPENED stream for https://api.kiro.cheap/v1/messages
+* [HTTP/2] [1] [:method: POST]
+* [HTTP/2] [1] [:scheme: https]
+* [HTTP/2] [1] [:authority: api.kiro.cheap]
+* [HTTP/2] [1] [:path: /v1/messages]
+* [HTTP/2] [1] [user-agent: curl/8.4.0]
+* [HTTP/2] [1] [accept: */*]
+* [HTTP/2] [1] [content-type: application/json]
+* [HTTP/2] [1] [x-api-key: sk-aw-f157875b77785becb3514fb6ae770e50]
+* [HTTP/2] [1] [anthropic-version: 2023-06-01]
+* [HTTP/2] [1] [content-length: 160]
+> POST /v1/messages HTTP/2
+> Host: api.kiro.cheap
+> User-Agent: curl/8.4.0
+> Accept: */*
+> Content-Type: application/json
+> x-api-key: sk-aw-f157875b77785becb3514fb6ae770e50
+> anthropic-version: 2023-06-01
+> Content-Length: 160
+> 
+} [160 bytes data]
+100   160    0     0  100   160      0    141  0:00:01  0:00:01 --:--:--   141< HTTP/2 200 
+< date: Sat, 21 Mar 2026 13:45:39 GMT
+< content-type: text/event-stream
+< server: cloudflare
+< cache-control: no-cache
+< x-request-id: d7fcf8fe-5590-49ab-822d-aa2c6bcf14d4
+< access-control-allow-origin: https://kiro.cheap
+< access-control-allow-credentials: true
+< cf-cache-status: DYNAMIC
+< strict-transport-security: max-age=15552000; includeSubDomains
+< x-content-type-options: nosniff
+< report-to: {"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=cNlywWd0Bv5hXy0c6d8%2F9lYHF0LJQ8QeHWHPNwvq8FvB4ANdHbKyRGHvwOlGd2s8KD9pUIcneKJEP1XtXvVaeyVphk8NztvsMJo9JWz3"}]}
+< nel: {"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}
+< cf-ray: 9dfd65f02bd76649-AMS
+< alt-svc: h3=":443"; ma=86400
+< 
+{ [323 bytes data]
+100  4374    0  4214  100   160   2291     87  0:00:01  0:00:01 --:--:--  2378100  7212    0  7052  100   160   2998     68  0:00:02  0:00:02 --:--:--  3067
+* Connection #0 to host api.kiro.cheap left intact
+event: message_start
+data: {"type":"message_start","message":{"id":"msg_eff5f2b7525576d8c495f53c","type":"message","role":"assistant","content":[],"model":"claude-haiku-4.5","stop_reason":null,"stop_sequence":null,"usage":{"input_tokens":16,"output_tokens":0,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}}}
+
+event: content_block_start
+data: {"type":"content_block_start","index":0,"content_block":{"type":"thinking","thinking":"","signature":"sig_a20c0552440bca9384952df452aa2d2e"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"\nTh"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"e us"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"er is asking me t"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"o say hello in exac"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"tly 5 words. This is a st"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"raightforward requ"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"est. I need"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" to p"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"rovide a "}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"greeting that consis"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"ts of"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" exactly "}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"5 words.\n"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"\nLet"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" me count: \"He"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"llo, how are you to"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"d"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"ay?"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"\" - th"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"at's 5 "}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"words"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":".\nOr: \"Hey th"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"ere, nice t"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"o meet you\" - t"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"hat's"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" 6"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" wo"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"r"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"ds.\nO"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"r: \"Hi, I'"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"m your"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" assistant\" - that's "}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"5 words. "}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"I'll go w"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"ith somet"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"hing "}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"friendly"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" and warm that "}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"fits my p"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"ersonality as des"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"cribed i"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"n the identity section.\n"}}
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":0}
+
+event: content_block_start
+data: {"type":"content_block_start","index":1,"content_block":{"type":"text","text":""}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":"Hey"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":","}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":" I"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":"'m your assistant."}}
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":1}
+
+event: message_delta
+data: {"type":"message_delta","delta":{"stop_reason":"end_turn","stop_sequence":null},"usage":{"input_tokens":2748,"output_tokens":271}}
+
+event: message_stop
+data: {"type":"message_stop"}
+
+* URL rejected: Malformed input to a URL function
+* Closing connection
+curl: (3) URL rejected: Malformed input to a URL function
+* URL rejected: Malformed input to a URL function
+* Closing connection
+curl: (3) URL rejected: Malformed input to a URL function
+* URL rejected: Malformed input to a URL function
+* Closing connection
+curl: (3) URL rejected: Malformed input to a URL function
+* URL rejected: Malformed input to a URL function
+* Closing connection
+curl: (3) URL rejected: Malformed input to a URL function

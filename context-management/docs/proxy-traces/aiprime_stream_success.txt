@@ -1,0 +1,505 @@
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying 80.66.196.85:443...
+* Connected to dev.aiprime.store (80.66.196.85) port 443
+* ALPN: curl offers h2,http/1.1
+* (304) (OUT), TLS handshake, Client hello (1):
+} [322 bytes data]
+*  CAfile: /etc/ssl/cert.pem
+*  CApath: none
+* (304) (IN), TLS handshake, Server hello (2):
+{ [122 bytes data]
+* (304) (IN), TLS handshake, Unknown (8):
+{ [19 bytes data]
+* (304) (IN), TLS handshake, Certificate (11):
+{ [2057 bytes data]
+* (304) (IN), TLS handshake, CERT verify (15):
+{ [80 bytes data]
+* (304) (IN), TLS handshake, Finished (20):
+{ [36 bytes data]
+* (304) (OUT), TLS handshake, Finished (20):
+} [36 bytes data]
+* SSL connection using TLSv1.3 / AEAD-CHACHA20-POLY1305-SHA256
+* ALPN: server accepted h2
+* Server certificate:
+*  subject: CN=dev.aiprime.store
+*  start date: Jan 21 17:57:44 2026 GMT
+*  expire date: Apr 21 17:57:43 2026 GMT
+*  subjectAltName: host "dev.aiprime.store" matched cert's "dev.aiprime.store"
+*  issuer: C=US; O=Let's Encrypt; CN=E7
+*  SSL certificate verify ok.
+* using HTTP/2
+* [HTTP/2] [1] OPENED stream for https://dev.aiprime.store/api/v1/messages
+* [HTTP/2] [1] [:method: POST]
+* [HTTP/2] [1] [:scheme: https]
+* [HTTP/2] [1] [:authority: dev.aiprime.store]
+* [HTTP/2] [1] [:path: /api/v1/messages]
+* [HTTP/2] [1] [user-agent: curl/8.4.0]
+* [HTTP/2] [1] [accept: */*]
+* [HTTP/2] [1] [content-type: application/json]
+* [HTTP/2] [1] [x-api-key: cr_04488b0d18aec28e0cde05e5c6231a9a8bca9163abaa8b2e48e67bcb42b61546]
+* [HTTP/2] [1] [anthropic-version: 2023-06-01]
+* [HTTP/2] [1] [content-length: 160]
+> POST /api/v1/messages HTTP/2
+> Host: dev.aiprime.store
+> User-Agent: curl/8.4.0
+> Accept: */*
+> Content-Type: application/json
+> x-api-key: cr_04488b0d18aec28e0cde05e5c6231a9a8bca9163abaa8b2e48e67bcb42b61546
+> anthropic-version: 2023-06-01
+> Content-Length: 160
+> 
+} [160 bytes data]
+100   160    0     0  100   160      0    256 --:--:-- --:--:-- --:--:--   256100   160    0     0  100   160      0     98  0:00:01  0:00:01 --:--:--    98< HTTP/2 200 
+< server: nginx
+< date: Sat, 21 Mar 2026 13:46:45 GMT
+< content-type: text/event-stream
+< cross-origin-opener-policy: same-origin
+< cross-origin-resource-policy: same-origin
+< origin-agent-cluster: ?1
+< referrer-policy: strict-origin-when-cross-origin
+< strict-transport-security: max-age=15552000; includeSubDomains
+< x-content-type-options: nosniff
+< x-dns-prefetch-control: off
+< x-download-options: noopen
+< x-frame-options: DENY
+< x-permitted-cross-domain-policies: none
+< x-xss-protection: 1; mode=block
+< access-control-allow-origin: *
+< access-control-allow-methods: GET, POST, PUT, DELETE, OPTIONS
+< access-control-allow-headers: Origin, X-Requested-With, Content-Type, Accept, Authorization, x-api-key, x-goog-api-key, api-key, x-admin-token, anthropic-version, anthropic-dangerous-direct-browser-access
+< access-control-expose-headers: X-Request-ID, Content-Type
+< access-control-max-age: 86400
+< access-control-allow-credentials: true
+< x-request-id: 02pa6xv51zny
+< cache-control: no-cache
+< pragma: no-cache
+< expires: 0
+< 
+{ [299 bytes data]
+100   459    0   299  100   160     97     51  0:00:03  0:00:03 --:--:--   149100   459    0   299  100   160     73     39  0:00:04  0:00:04 --:--:--   112100   459    0   299  100   160     58     31  0:00:05  0:00:05 --:--:--    90100  1386    0  1226  100   160    208     27  0:00:05  0:00:05 --:--:--   232100  2665    0  2505  100   160    384     24  0:00:06  0:00:06 --:--:--   513100  9608    0  9448  100   160   1258     21  0:00:07  0:00:07 --:--:--  2064100 13367    0 13207  100   160   1558     18  0:00:08  0:00:08 --:--:--  2945
+* Connection #0 to host dev.aiprime.store left intact
+event: message_start
+data: {"type":"message_start","message":{"id":"resp_05527d430d3f0d290169bea145568c8191979f9b7908052392","type":"message","role":"assistant","model":"claude-haiku-4-5-20251001","stop_sequence":null,"usage":{"input_tokens":0,"output_tokens":0},"content":[],"stop_reason":null}}
+
+
+event: content_block_start
+data: {"type":"content_block_start","index":0,"content_block":{"type":"thinking","thinking":""}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"**Considering greeting length**\n\nI"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" need"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" to"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" come"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" up"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" with"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" a"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" five"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"-word"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" hello"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" for"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" the"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" user"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"."}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" It's"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" a"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" simple"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" task"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":","}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" but"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" I"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" want"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" to"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" make"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" sure"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" it"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" sounds"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" friendly"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" and"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" inviting"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"!"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" H"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"m"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":","}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" perhaps"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" something"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" like"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" \""}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"Hello"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" there"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":","}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" hope"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" you're"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" well"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"!\""}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" or"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" \""}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"Hi"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"!"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" How"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" can"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" I"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" assist"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" you"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"?\""}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" I'm"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" thinking"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" about"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" different"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" tones"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" too"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":","}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" like"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" casual"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" versus"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" formal"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"."}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" This"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" should"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" be"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" straightforward"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":","}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" but"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" I"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" really"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" just"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" want"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" to"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" make"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" it"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" special"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"."}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" Let's"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" see"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" what"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" feels"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":" right"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"!"}}
+
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":0}
+
+
+event: content_block_start
+data: {"type":"content_block_start","index":1,"content_block":{"type":"text","text":""}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":"Hello"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":" there"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":","}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":" hope"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":" you're"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":" doing"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":" well"}}
+
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":"!"}}
+
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":1}
+
+
+event: message_delta
+data: {"type":"message_delta","delta":{"stop_reason":"end_turn","stop_sequence":null},"usage":{"input_tokens":12,"output_tokens":26}}
+
+
+event: message_stop
+data: {"type":"message_stop"}
+
+
+* URL rejected: Malformed input to a URL function
+* Closing connection
+curl: (3) URL rejected: Malformed input to a URL function
+* URL rejected: Malformed input to a URL function
+* Closing connection
+curl: (3) URL rejected: Malformed input to a URL function
+* URL rejected: Malformed input to a URL function
+* Closing connection
+curl: (3) URL rejected: Malformed input to a URL function
+* URL rejected: Malformed input to a URL function
+* Closing connection
+curl: (3) URL rejected: Malformed input to a URL function

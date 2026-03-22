@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 from src.agents.agent1_selector import Agent1Selector
 from src.agents.agent2_compressor import Agent2Compressor
+from src.agents.parallel_agent1 import ParallelAgent1Orchestrator
 from src.utils.stitching import stitch_compressed_blocks
 from src.utils.token_counter import TokenCounter
 from src.utils.data_loader import add_line_numbers, remove_line_numbers
@@ -28,7 +29,8 @@ class CompressionOrchestrator:
         self,
         agent1: Optional[Agent1Selector] = None,
         agent2: Optional[Agent2Compressor] = None,
-        token_counter: Optional[TokenCounter] = None
+        token_counter: Optional[TokenCounter] = None,
+        enable_parallel: bool = True
     ):
         """
         Initialize orchestrator.
@@ -37,10 +39,18 @@ class CompressionOrchestrator:
             agent1: Agent 1 instance (creates new if None)
             agent2: Agent 2 instance (creates new if None)
             token_counter: TokenCounter instance (creates new if None)
+            enable_parallel: Enable parallel Agent 1 for large contexts (default True)
         """
         self.agent1 = agent1 or Agent1Selector()
         self.agent2 = agent2 or Agent2Compressor()
         self.token_counter = token_counter or TokenCounter()
+        self.enable_parallel = enable_parallel
+
+        # Initialize parallel orchestrator if enabled
+        if self.enable_parallel:
+            self.parallel_agent1 = ParallelAgent1Orchestrator(agent1=self.agent1)
+        else:
+            self.parallel_agent1 = None
 
     def _read_compression_instructions(self) -> str:
         """
@@ -70,6 +80,7 @@ class CompressionOrchestrator:
     ) -> Dict:
         """
         Compress context by freeing specified number of tokens.
+        Uses iterative compression to reach 75% target.
 
         Args:
             context: Full context text (without line numbers)
@@ -84,85 +95,124 @@ class CompressionOrchestrator:
                 - final_tokens: int
                 - tokens_saved: int
                 - time_seconds: float
+                - iterations: int
         """
         start_time = time.time()
 
         # ALWAYS read compression instructions before starting
         instructions = self._read_compression_instructions()
 
-        # Add line numbers for Agent 1
-        numbered_context = add_line_numbers(context)
+        # Calculate target tokens
+        current_tokens = self.token_counter.count_tokens(context)
+        target_tokens = current_tokens - need_to_free
 
-        # Step 1: Agent 1 selects blocks
-        selection_result = self.agent1.select_blocks(
-            context=numbered_context,
-            need_to_free=need_to_free,
-            category=category
-        )
+        print(f"[Orchestrator] Starting iterative compression")
+        print(f"[Orchestrator] Current: {current_tokens}, Target: {target_tokens}")
 
-        if not selection_result['blocks']:
-            # No blocks selected - return original context
-            return {
-                'compressed_context': context,
-                'blocks': [],
-                'original_tokens': self.token_counter.count_tokens(context),
-                'final_tokens': self.token_counter.count_tokens(context),
-                'tokens_saved': 0,
-                'time_seconds': time.time() - start_time
-            }
+        # Iterative compression loop
+        iterations = 0
+        max_iterations = 5
+        min_progress_percent = 5  # Minimum progress per iteration
+        all_blocks = []
 
-        # Step 2: Agent 2 compresses each block
-        blocks_with_compression = []
-        total_original = 0
-        total_compressed = 0
+        while current_tokens > target_tokens and iterations < max_iterations:
+            iterations += 1
+            iteration_start_tokens = current_tokens
 
-        # Limit number of blocks to compress (to avoid excessive time)
-        max_blocks = 3
-        blocks_to_compress = selection_result['blocks'][:max_blocks]
-        if len(selection_result['blocks']) > max_blocks:
-            print(f"[Orchestrator] Limiting to {max_blocks} blocks (from {len(selection_result['blocks'])})")
+            print(f"\n[Iteration {iterations}] Current: {current_tokens}, Target: {target_tokens}")
 
-        for block in blocks_to_compress:
-            compression_result = self.agent2.compress_block(
-                context=numbered_context,
-                start_line=block['start_line'],
-                end_line=block['end_line'],
-                estimated_tokens=block['estimated_tokens']
+            # Calculate how much to free this iteration
+            need_to_free_now = current_tokens - target_tokens
+
+            # Add line numbers for Agent 1
+            numbered_context = add_line_numbers(context)
+
+            # Step 1: Agent 1 selects blocks (with parallel processing if enabled)
+            if self.enable_parallel and self.parallel_agent1:
+                selection_result = self.parallel_agent1.select_blocks_parallel(
+                    context=numbered_context,
+                    need_to_free=need_to_free_now,
+                    category=category
+                )
+            else:
+                selection_result = self.agent1.select_blocks(
+                    context=numbered_context,
+                    need_to_free=need_to_free_now,
+                    category=category
+                )
+
+            if not selection_result['blocks']:
+                print(f"[Iteration {iterations}] Agent 1 returned no blocks, stopping")
+                break
+
+            blocks = selection_result['blocks']
+            print(f"[Iteration {iterations}] Agent 1 selected {len(blocks)} blocks")
+
+            # Limit to 3 blocks per iteration
+            blocks = blocks[:3]
+
+            # Step 2: Agent 2 compresses each block
+            blocks_with_compression = []
+
+            for i, block in enumerate(blocks):
+                print(f"[Iteration {iterations}] Compressing block {i+1}/{len(blocks)}...")
+                compression_result = self.agent2.compress_block(
+                    context=numbered_context,
+                    start_line=block['start_line'],
+                    end_line=block['end_line'],
+                    estimated_tokens=block['estimated_tokens']
+                )
+
+                blocks_with_compression.append({
+                    'start_line': block['start_line'],
+                    'end_line': block['end_line'],
+                    'compressed_text': compression_result['compressed_text'],
+                    'original_tokens': compression_result['original_tokens'],
+                    'compressed_tokens': compression_result['compressed_tokens'],
+                    'ratio': compression_result['ratio']
+                })
+
+            # Step 3: Stitch compressed blocks back
+            compressed_context_numbered = stitch_compressed_blocks(
+                numbered_context,
+                blocks_with_compression
             )
 
-            blocks_with_compression.append({
-                'start_line': block['start_line'],
-                'end_line': block['end_line'],
-                'compressed_text': compression_result['compressed_text'],
-                'original_tokens': compression_result['original_tokens'],
-                'compressed_tokens': compression_result['compressed_tokens'],
-                'ratio': compression_result['ratio']
-            })
+            # Remove line numbers
+            context = remove_line_numbers(compressed_context_numbered)
+            current_tokens = self.token_counter.count_tokens(context)
 
-            total_original += compression_result['original_tokens']
-            total_compressed += compression_result['compressed_tokens']
+            # Track all blocks
+            all_blocks.extend(blocks_with_compression)
 
-        # Step 3: Stitch compressed blocks back
-        compressed_context_numbered = stitch_compressed_blocks(
-            numbered_context,
-            blocks_with_compression
-        )
+            # Check progress
+            tokens_freed = iteration_start_tokens - current_tokens
+            progress_percent = (tokens_freed / iteration_start_tokens) * 100 if iteration_start_tokens > 0 else 0
 
-        # Remove line numbers for final result
-        compressed_context = remove_line_numbers(compressed_context_numbered)
+            print(f"[Iteration {iterations}] Freed {tokens_freed} tokens ({progress_percent:.1f}%)")
+
+            # Protection against getting stuck
+            if progress_percent < min_progress_percent:
+                print(f"[Iteration {iterations}] Progress too small (<{min_progress_percent}%), stopping")
+                break
 
         # Calculate final metrics
-        original_tokens = self.token_counter.count_tokens(context)
-        final_tokens = self.token_counter.count_tokens(compressed_context)
+        original_tokens = self.token_counter.count_tokens(context) if iterations == 0 else current_tokens + sum(b['original_tokens'] - b['compressed_tokens'] for b in all_blocks)
+        final_tokens = current_tokens
         tokens_saved = original_tokens - final_tokens
 
+        print(f"\n[Orchestrator] Compression complete in {iterations} iterations")
+        print(f"[Orchestrator] Final: {final_tokens} tokens (target: {target_tokens})")
+        print(f"[Orchestrator] Time: {time.time() - start_time:.1f}s")
+
         return {
-            'compressed_context': compressed_context,
-            'blocks': blocks_with_compression,
+            'compressed_context': context,
+            'blocks': all_blocks,
             'original_tokens': original_tokens,
             'final_tokens': final_tokens,
             'tokens_saved': tokens_saved,
-            'time_seconds': time.time() - start_time
+            'time_seconds': time.time() - start_time,
+            'iterations': iterations
         }
 
     def should_compress_category(
@@ -198,7 +248,7 @@ class CompressionOrchestrator:
             quota: Token quota
 
         Returns:
-            Number of tokens to free (to reach 70% of quota)
+            Number of tokens to free (to reach 75% of quota)
         """
-        target = int(quota * 0.70)
+        target = int(quota * 0.75)
         return max(0, current_tokens - target)

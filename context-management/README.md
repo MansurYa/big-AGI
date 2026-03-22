@@ -52,9 +52,10 @@ Entity Preservation: >99%
 ## Documentation
 
 - **[QUICKSTART.md](QUICKSTART.md)** - 5-minute setup guide
-- **[HANDOFF.md](HANDOFF.md)** - Complete handoff document
-- **[docs/FINAL_REPORT.md](docs/FINAL_REPORT.md)** - Full project report
-- **[docs/PHASE_4_COMPLETE.md](docs/PHASE_4_COMPLETE.md)** - Phase 4 details
+- **[HANDOFF.md](HANDOFF.md)** - Complete technical documentation
+- **[HOW_TO_START_PROXY.md](HOW_TO_START_PROXY.md)** - Proxy startup instructions
+- **[DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md)** - Deployment guide
+- **[docs/TRANSPORT_HARDENING_REPORT.md](docs/TRANSPORT_HARDENING_REPORT.md)** - Proxy compatibility fixes
 
 ---
 

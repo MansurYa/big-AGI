@@ -1,6 +1,7 @@
 """
 Storage for compression metadata and rollback support.
 Stores compression history to enable full rollback functionality.
+Also stores compressed context for incremental compression.
 """
 import json
 import time
@@ -211,6 +212,50 @@ class CompressionStorage:
             'latest_compression': records[-1].timestamp,
             'categories_compressed': list(set(r.category for r in records))
         }
+
+    def load_compressed_context(self, chat_id: str) -> Optional[str]:
+        """
+        Load compressed context for a chat.
+
+        Args:
+            chat_id: Chat identifier
+
+        Returns:
+            Compressed context string or None if not found
+        """
+        context_file = self.storage_dir / f"{chat_id}_compressed_context.json"
+
+        if not context_file.exists():
+            return None
+
+        try:
+            with open(context_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            return data.get('compressed_context')
+        except Exception as e:
+            print(f"[Storage] Error loading compressed context: {e}")
+            return None
+
+    def save_compressed_context(self, chat_id: str, context: str) -> None:
+        """
+        Save compressed context for a chat.
+
+        Args:
+            chat_id: Chat identifier
+            context: Compressed context string
+        """
+        context_file = self.storage_dir / f"{chat_id}_compressed_context.json"
+
+        try:
+            with open(context_file, 'w', encoding='utf-8') as f:
+                json.dump({
+                    'compressed_context': context,
+                    'timestamp': time.time()
+                }, f, indent=2)
+
+            print(f"[Storage] Saved compressed context ({len(context)} chars)")
+        except Exception as e:
+            print(f"[Storage] Error saving compressed context: {e}")
 
 
 def create_compression_record(
