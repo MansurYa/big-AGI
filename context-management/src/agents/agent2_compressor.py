@@ -315,11 +315,71 @@ class Agent2Compressor:
         return True
 
     def _extract_text_block(self, response) -> str:
-        """Extract first text block from Anthropic response."""
-        for b in response.content:
-            if hasattr(b, "text"):
-                return b.text
-        raise ValueError("No text block found in API response")
+        """Extract first text block from Anthropic response.
+
+        Handles both standard Anthropic API format and proxy responses that may return strings.
+        Also handles SSE-formatted responses from custom proxies.
+        """
+        import re
+
+        # Handle case where response is already a string (some proxies do this)
+        if isinstance(response, str):
+            # Check if this is SSE-formatted response (custom proxy streaming)
+            if "event:" in response and "data:" in response:
+                # Parse SSE events and extract text content
+                text_parts = []
+                # Match pattern: data: {"type":"content_block_delta",...,"text":"..."}
+                sse_pattern = re.compile(r'data:\s*\{[^}]*"text":\s*"([^"]*)"[^}]*\}')
+                for match in sse_pattern.finditer(response):
+                    text_parts.append(match.group(1))
+
+                if text_parts:
+                    # Join all text deltas
+                    result = ''.join(text_parts)
+                    # Unescape JSON strings
+                    result = result.replace('\\n', '\n').replace('\\"', '"').replace('\\\\', '\\')
+                    return result
+
+                # If SSE parsing failed, return raw string (may contain events)
+                # Try to extract any readable text
+                lines = response.split('\n')
+                clean_lines = []
+                for line in lines:
+                    # Skip SSE event markers
+                    if line.strip().startswith('event:') or line.strip().startswith('data:'):
+                        continue
+                    if line.strip():
+                        clean_lines.append(line)
+                if clean_lines:
+                    return '\n'.join(clean_lines)
+
+            return response
+
+        # Handle case where response.content is a string (non-standard proxy format)
+        if hasattr(response, "content") and isinstance(response.content, str):
+            content = response.content
+            # Also check for SSE format in content
+            if "event:" in content and "data:" in content:
+                # Parse SSE events
+                text_parts = []
+                sse_pattern = re.compile(r'data:\s*\{[^}]*"text":\s*"([^"]*)"[^}]*\}')
+                for match in sse_pattern.finditer(content):
+                    text_parts.append(match.group(1))
+
+                if text_parts:
+                    result = ''.join(text_parts)
+                    result = result.replace('\\n', '\n').replace('\\"', '"').replace('\\\\', '\\')
+                    return result
+
+            return content
+
+        # Standard Anthropic API format with content blocks
+        if hasattr(response, "content"):
+            for b in response.content:
+                if hasattr(b, "text"):
+                    return b.text
+
+        raise ValueError(f"No text block found in API response. Response type: {type(response)}")
 
     def _compress_once(self, *, system_prompt: str, user_message: str, max_out_tokens: int) -> str:
         response = self._call_api(

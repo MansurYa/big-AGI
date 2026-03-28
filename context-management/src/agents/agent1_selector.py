@@ -116,15 +116,46 @@ class Agent1Selector:
                 return self._fallback_selection(context, need_to_free)
             raise
 
-        # Extract text response (handle extended thinking)
+        # Extract text response (handle extended thinking and proxy compatibility)
         response_text = None
-        for block in response.content:
-            if hasattr(block, 'text'):
-                response_text = block.text
-                break
+
+        # Handle case where response.content is already a string (non-standard proxy format)
+        if hasattr(response, 'content') and isinstance(response.content, str):
+            response_text = response.content
+        # Handle case where response itself is a string (some proxies do this)
+        elif isinstance(response, str):
+            response_text = response
+        # Standard Anthropic API format with content blocks
+        elif hasattr(response, 'content'):
+            for block in response.content:
+                if hasattr(block, 'text'):
+                    response_text = block.text
+                    break
 
         if response_text is None:
-            raise ValueError("No text block found in API response")
+            raise ValueError(f"No text block found in API response. Response type: {type(response)}")
+
+        # Handle SSE-formatted responses from custom proxies (strip event markers)
+        import re
+        if isinstance(response_text, str) and "event:" in response_text and "data:" in response_text:
+            # Parse SSE events and extract text content
+            text_parts = []
+            # Match pattern: data: {"type":"content_block_delta",...,"text":"..."}
+            sse_pattern = re.compile(r'data:\s*\{[^}]*"text":\s*"([^"]*)"[^}]*\}')
+            for match in sse_pattern.finditer(response_text):
+                text_parts.append(match.group(1))
+
+            if text_parts:
+                # Join all text deltas
+                response_text = ''.join(text_parts)
+                # Unescape JSON strings
+                response_text = response_text.replace('\\n', '\n').replace('\\"', '"').replace('\\\\', '\\')
+            else:
+                # If SSE parsing failed, try to extract any readable text
+                lines = response_text.split('\n')
+                clean_lines = [line for line in lines if not line.strip().startswith('event:') and not line.strip().startswith('data:') and line.strip()]
+                if clean_lines:
+                    response_text = '\n'.join(clean_lines)
 
         # Check if response is a proxy error message (not JSON)
         if not response_text.strip().startswith('{') and not response_text.strip().startswith('['):
