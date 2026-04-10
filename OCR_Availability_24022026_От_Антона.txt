@@ -1,0 +1,973 @@
+## OCR ОТЧЁТНОЙ ПРЕЗЕНТАЦИИ ЗА ПЕРВЫЙ ЭТАП
+
+### [1]
+
+Saint-Petersburg State University
+
+# Complex System Management and Control Scheduling Dynamic Availability Simulation Technology Cooperation Project
+
+### Stage 1 status
+
+**Presented by:**
+Shchegoleva N. L.
+
+27.02.2026
+
+### [2]
+
+# Key Goals
+
+**Priority 1 (high): Fault modeling and call chain modeling for complex systems**
+
+1. Refine the fault modeling for complex scheduling systems and estimate the fault probability distribution. The coverage rate should be greater than $80\%$.
+
+2. Output typical scenarios, such as the full-path flow chart of inference or search requests in the management and scheduling engine, and simulate management and control performance of complex systems based on the flow chart.
+
+**Priority 2 (high): Evaluation and sensitivity analysis of dynamic availability of system management and scheduling**
+
+Provide the availability of complex system management, control, and scheduling, with a confidence level of $95\%$. Calculate the global sensitivity of the availability metric with respect to the failure rate of system components, and identify three or more reliability bottlenecks.
+
+### [3]
+
+# Scope of the Work
+
+**Task 1**: Model the fault mode and call chain of the scheduling management and control system for large-scale complex systems.
+
+**Objectives**:
+1. Model restart faults, performance deterioration faults, and multi-point faults based on the physical failure mechanism and statistical analysis, estimate the probability distribution of different faults.
+2. Parse and model the entire process path of the request in the system by analyzing the software stack of the management, control, and scheduling engine.
+
+**Task 2**: Evaluate the dynamic availability of system management, control, and scheduling, support load scenario analysis such as inference in typical large EP scenarios and agent multi-agent, analyze the sensitivity of each component, and locate the cluster availability bottleneck.
+
+**Objective**:
+1. Based on Monte Carlo method solve a dynamic availability index and construct end-to-end simulation platform.
+2. By the variance decomposition, Fourier amplitude decomposition or any other suitable method obtain the global sensitivity of the components. Based on this, locate the management, control, and scheduling bottlenecks of complex systems.
+
+### [4]
+
+# Project deliverables (stage 1)
+
+| Job Description | Delivery | Acceptance criteria | Acceptance Method |
+| :--- | :--- | :--- | :--- |
+| 1.1. Have a basic command of the architecture, algorithm implementation principles, and related code of the control and scheduling engine for complex systems. | Research report on the architecture of the management, control, and scheduling engine for complex systems | The management, control, and scheduling report of complex systems covers at least the following information: Service-based scheduling management for requests in the inference engine system, delivery principle based on the DeepseekV3 operator, and PD instance management, control, and scheduling survey report. | Acceptance by Huawei acceptance team. |
+| 1.2. Complete the architecture design of the dynamic availability simulation platform for complex system management, control, and scheduling services. | Simulation platform solution design report | The content covers the architecture design, data structure, configuration of input and output parameters, and detailed time nodes. | Acceptance by Huawei acceptance team. |
+
+### [5]
+
+# Project deliverables (stage 1) п. 1
+
+| Job Description | Delivery | Acceptance criteria | Acceptance Method |
+| :--- | :--- | :--- | :--- |
+| 1.1. Have a basic command of the architecture, algorithm implementation principles, and related code of the control and scheduling engine for complex systems. | Research report on the architecture of the management, control, and scheduling engine for complex systems | The <u>management</u>, <u>control</u>, and scheduling report of complex systems covers at least the following information: <u>Service-based</u> <u>scheduling</u> <u>management for requests</u> in the inference engine system, <u>delivery</u> <u>principle based on the DeepseekV3</u> <u>operator</u>, and <u>PD instance</u> <u>management, control, and scheduling</u> survey report. | Acceptance by Huawei acceptance team. |
+
+### [6]
+
+# Overview of LLM based Multi-Agents
+
+The **LLM-based multi-agent system** consists of specialized **agents** with different **roles**. Some of the agents may use single-agents or leverage external tools to fulfill their *Service Level Objectives* (**SLO**), but the overall behavior of the system is determined by communication, orchestration and the quality of the model. According to the *common surveys*$^{[1]}$, errors and performance degradations can propagate between agents leading to the *Cascading effects* and *logical errors*.
+
+We considered several multi-agent systems like **Codex**$^{[2]}$, **OpenManus**$^{[3]}$ and **CrewAI**$^{[4]}$, that demonstrate the transition from using LLM as a single model to agent-based systems in which LLM acts as an active component, performing actions, interacting with the environment and other agents:
+
+| Tool | Remarkable features |
+| :--- | :--- |
+| Codex | • Autonomous LLM agent<br>• Possibility of considering long-term and parallel tasks |
+| OpenManus | • Integration of external tools and APIs<br>• Well-illustrates dependency errors |
+| CrewAI | • Explicit agent orchestration<br>• Deterministic/LLM-based logic capability<br>• Convenient for scenarios and experiments |
+
+All these multi-agent systems are **open-source** and thus **easy to research**. Yet, these systems essentially have a **focus on functionality**, not reliability (fault handling only done on lower abstraction levels). Thus, there is **no availability analysis** done for these systems so as **no ready-to-use fault-models** and sub-health benchmarks.
+
+### [7]
+
+# Multi-agent system design
+
+While having various targets, the top-level architecture of all the multi-agent system are pretty-similar and consists of the following major parts:
+
+*   **User Interface** - user entry point: task formulation and file upload.
+*   **Coordination Layer** - central control module of the system
+*   **Task Assignment & Dataflow** - mechanism for distributing subtasks and controlling the flow of execution.
+*   **Specialized Agents** - performers of specific types of operations
+*   **Execution & Combination** - Aggregation of intermediate results and formation of a single answer.
+*   **Output** - the final result of the system's operation
+
+> 📊 **FIGURE**: Manus/OpenManus$^{[3]}$ conceptual architecture and workflow$^{[5]}$.
+>
+> **Визуальный анализ**:
+> - **Тип**: Схема архитектуры системы (System Architecture and Workflow).
+> - **Основные блоки**:
+>     - **User Interface**: Включает модули "Chat" и "File Upload".
+>     - **Manus Coordination Layer**: Содержит компоненты "Memory/Knowledge", "Task Decomposition" и "Agent Orchestration".
+>     - **Task Assignment & Dataflow**: Промежуточный слой распределения задач.
+>     - **Слой агентов (Specialized Agents)**: Представлен четырьмя типами: Agent (Web) для браузинга и экстракции, Agent (Data) для анализа и API доступа, Agent (Code) для Python и автоматизации, Agent (Files) для менеджмента и процессинга.
+>     - **Execution & Combination**: Блок выполнения, где агенты могут взаимодействовать и обмениваться данными.
+>     - **Output (Examples)**: Примеры выходных данных — Reports, Charts, Websites, Spreadsheets, Notifications.
+> - **Ключевой тренд**: Демонстрируется линейно-циклический процесс от ввода пользователя через координацию и специализированных агентов к формированию комбинированного результата.
+
+### [8]
+
+# Example: graph-based Model of OpenManus
+
+The system can be viewed as a $2$-layer tree structure: orchestrator on the top-layer and all dependent/orchestrated agents on the $2^{nd}$ layer.
+
+> 📊 **FIGURE**: Execution flow of OpenManus (author's diagram)
+>
+> **Визуальный анализ**:
+> - **Тип**: Иерархический направленный граф (блок-схема архитектуры).
+> - **Уровни**: 
+>   1. **User** (входная точка).
+>   2. **User Interface**.
+>   3. **Coordination Layer (Orchestrator)** — центральный узел управления.
+>   4. **Agent Layer**: Web Agent, Data Agent, Code Agent, Files Agent, Execution & Combination.
+>   5. **Resource/Output Layer**: Web/APIs, Data Sources/APIs, Python Environment, File System, Final Output.
+> - **Связи**: Двунаправленные стрелки между оркестратором, агентами и их соответствующими средами исполнения, что указывает на циклы обратной связи.
+> - **Ключевой тренд**: Демонстрация централизованного управления (orchestration), где координатор распределяет задачи между специализированными агентами.
+
+The architecture model of ***OpenManus*** is a good example:
+
+**Nodes** reflect orchestrator, agents, tools, aggregation, etc.
+
+**Edges** show the interaction: *orchestrator assigns a step*, then *agent calls a tool* and finally *result is returned back* (typical feedback loop).
+
+**Feedbacks** reflect retracements that increase latency and can lead to quality degradation.
+
+**Nodes/edges** can be described by specifying the probability of failure, the number of retries and quantifying the contribution of components and the risk of SLA violation.
+
+**The management of data flows in the system is handled by an orchestrator**, *but control & scheduling are handled by lower system layers.*
+
+### [9]
+
+# Multi-agent system stack: Inference: Parallelisms & operators
+
+Modern LLM models such as DeepSeek-V3 utilizes various essential parallelisms, that allow to equally split computations across different devices.
+
+> 📊 **FIGURE**: MoE/EP inference: gate/router, all-to-all dispatch/collect, expert compute, decode$^{[6]}$
+>
+> **Визуальный анализ**:
+> - **Тип**: Схема архитектуры инференса (Expert Parallelism) на нескольких устройствах.
+> - **Компоненты**: Показаны два устройства ($Device_1$ и $Device_n$), каждое из которых содержит блоки: Inputs, Multi-Head Attention, Gate, Encode, Expert ($Expert_1 \dots Expert_n$), Decode и Outputs.
+> - **Связи**: Центральные блоки "All-to-All Dispatch" и "All-to-All Combine" обеспечивают обмен данными между экспертами на разных устройствах. Присутствуют остаточные связи (residual connections) в обход блоков внимания и экспертов.
+> - **Ключевой тренд**: Демонстрация конвейера, где данные распределяются (dispatch) между специализированными экспертами и собираются (combine) обратно для финального декодирования.
+
+**Operator principle of calculations:**
+***MoE/EP*** inference (typical for the DeepSeek class of models) is represented as a sequence of operators: the compute + communication pipeline: Operator pipeline is shown in the figure.
+
+**Key feature of MoE:**
+Performance is determined not only by the GPU calculations of experts, but also by the cost of communications (Dispatch/Combine, all-to-all) and the routing balance (load on experts).
+
+**Control/monitoring objects:**
+*   ***Routing & load balancing*** — token balance by experts, preventing hot experts and stragglers (p95/p99).
+*   ***Communication-aware scheduling*** — all-to-all network/topology accounting, inter-node traffic minimization.
+*   ***Placement & EP degree*** — placement of device/node experts and choice of degree of expert parallelism.
+
+The parallelisms and operator structure are the fundamental concepts that are used in LLM inference planning, scheduling and error handling.
+
+### [10]
+
+# Multi-agent system stack: Inference: KV-cache
+
+The $VLLM^{[7]}$ framework is a standard inference engine widely used in production. On a small scale it handles all *control* and *scheduling* to leverage the inference performance. It supports parallelisms out of the box, but the key its feature is **Paged Attention**:
+
+**Paged Attention** borrows concepts from *virtual memory*:
+*   Tokens $\approx$ bytes
+*   KV-cache $\approx$ process address space
+*   KV-block $\approx$ page
+*   Request $\approx$ process
+
+Thus, requests use logical KV-blocks that are stored in non-contiguous physical GPU memory blocks (*as on the picture*):
+
+| Paged attention pros | Paged attention cons |
+| :--- | :--- |
+| Significant GPU memory savings | Complex attention implementation |
+| Elimination of memory fragmentation | Small runtime overhead |
+| Support for efficient dynamic batching | Doesn't solve distributed inference |
+
+> 📊 **FIGURE [8]**: KV cache paging
+>
+> **Визуальный анализ**:
+> - **Тип**: Схема распределения памяти (Mapping).
+> - **Оси**: Логические блоки (Logical KV blocks) сопоставляются с физическими блоками (Physical KV blocks).
+> - **Легенда**: 
+>   - **Request A** (желтый): содержит токены "Four score and seven", "years ago our fathers", "brought".
+>   - **Request B** (зеленый): содержит токены "It was the best", "of times".
+> - **Ключевой тренд**: Демонстрируется, как логически последовательные данные запросов (A и B) разбиваются на блоки и сохраняются в физической памяти GPU в произвольном (непрерывном) порядке, аналогично подкачке страниц в ОС. Физический блок 7 содержит продолжение данных Request A, хотя логически они идут в начале.
+
+On the larger system's scale the Paged Attention mechanism allows to distribute the calculations and let *control & scheduling* processes to be handled by a *dedicated layer*.
+
+### [11]
+
+# Multi-agent system stack: Inference: PD-separation
+
+**Prefill/Decode instances (PD instances)** – are dedicated inference instances for two stages of the request processing - ***Prefill*** (processing the prompt/prefix) and ***Decode*** (individual token generation).
+
+**The need to separate Prefill and Decode:**
+These stages have different load profiles and different bottlenecks: Prefill is often limited by computations, Decode – by latency/memory/bandwidth. Having separate prefill and decode instances allow to **control**, **plan** and eventually **balance** the system load in the system leveraging the performance and hardware utilization.
+
+**What needs to be managed and controlled at the PD level:**
+*   ***Routing requests between pools***: where to send Prefill and where to continue Decode.
+*   ***Admission control***: limiting the incoming flow to maintain SLO and avoid queue bloating.
+*   ***SLA-aware planning***: rules that take into account TTFT/TPOT, tail-latency, queue lengths, traffic type (short/long requests).
+*   ***Independent pools scaling***: The Prefill pool and Decode pool are scaled separately according to their metrics.
+*   ***Status and KV-cache***: deciding where to store KV and how to minimize “expensive” state transfers between nodes/pools.
+
+### [12]
+
+# Multi-agent system stack: Scheduling PD-instances
+
+To schedule and manage PD-instances in the cluster the Ray framework is used. *Ray* — is a distributed computing orchestration framework, that creates an abstraction layer over the physical cluster, providing primitives (**Actors**, **Tasks**) for state and resource management. It is the infrastructure basis for most modern inference systems (**vLLM**, **Alpa**, **KubeRay**):
+
+| Architectural component | Function in a distributed system | Importance for accessibility modeling |
+| :--- | :--- | :--- |
+| Global Control Store (GCS) | Centralized storage of metadata and sharding tables. The "brain" of the cluster. | Determines the stability of the Control Plane. Allows modeling scenarios of control loss and state desynchronization. |
+| Distributed Object Store (Plasma) | Shared Memory with zero-copy access for processes on the node. | Critical for prefill/decode decoupling. Models the physics of heavy key-value cache transfers without the overhead of serialization. |
+| Raylet & Heartbeats | Local scheduler and heartbeat check mechanism (keep-alive). | Defines the $T_{detected}$ metric (failure detection time). Creates a "blind spot" when requests are sent to an already unavailable node. |
+| Placement Groups | Atomic resource allocation for a group of related actors (Gang Scheduling). | A basic primitive for Expert Parallelism. Explains the mechanics of cascading failure: the failure of one GPU disables the entire group of MoE experts. |
+
+### [13]
+
+# Multi-agent system stack: Scheduling traffic
+
+The processing time of user's traffic is inherently unpredictable in terms of resource and latency. To address this problem the scheduling is used and the availability of the whole system depends on it dramatically. One of the few open-source schedulers, that handles this influence is **Llumnix**$^{[9]}$. It introduces token-level scheduling and preemption for the first time with the ***KV-cache*** migration:
+
+**Preemption** - is an interruption of the current task to give resources to another, higher-priority task. This means:
+
+*   Token generation for a single request can be temporarily suspended.
+*   The $KV$-cache state is saved or migrated.
+*   The GPU then begins working on a more important request.
+*   When resources are free again, the interrupted task resumes from where it left off.
+
+**Token-level scheduling**$^{[10]}$ - is an approach to scheduling tasks at the level of individual tokens, rather than at the level of entire requests. With token-level scheduling, the system can:
+
+*   Split text generation into individual tokens.
+*   Process tokens from different requests in parallel.
+*   Dynamically switch between tasks.
+
+| Token-level scheduling pros | Token-level scheduling cons |
+| :--- | :--- |
+| Significant reduction in tail latency | $KV$-cache migration - expensive |
+| More stable SLA | High complexity of implementation |
+
+### [14]
+
+# Multi-agent system stack: Control
+
+**Kubernetes**$^{[11]}$ - a platform for managing containerized workloads and services through declarative configuration and automation. The core concept is to abstract infrastructure (servers, networks, storage) and allow *service-based system management*, where developers declaratively describe the desired application states.
+
+The cluster architecture is based on the separation of roles:
+
+*   **Control Plane (Master-nodes)** - the control plane, which includes the API server (kube-apiserver), controllers (kube-controller-manager), scheduler (kube-scheduler), and state store (etcd). It is responsible for making decisions and maintaining the desired state.
+*   **Worker Nodes** - machines running applications. Each node contains a container runtime (e.g., Docker or container), a Kubelet agent for communicating with the Control Plane, and a kube-proxy proxy component for network routing.
+
+**Kubernetes allows to provide**: Orchestration, automation, control resource utilization, scaling, isolation and fault recovery.
+
+The above makes ***Kubernetes*** a convenient platform for deploying and managing large language model (LLM) inference using ***vLLM+Ray***.
+
+---
+
+> 📊 **FIGURE**: Kubernetes architecture: control plane and worker nodes*
+>
+> **Визуальный анализ**:
+> - **Тип**: Схема архитектуры системы (System Architecture Diagram).
+> - **Компоненты**:
+>   - **CONTROL PLANE**: Содержит `cloud-controller-manager`, `etcd`, `kube-api-server`, `scheduler` (kube-scheduler) и `controller manager` (kube-controller-manager). Показана связь с внешним `CLOUD PROVIDER API`.
+>   - **Worker Nodes (Node 1, Node 2)**: Каждая нода включает `kubelet`, `kube-proxy` и среду выполнения контейнеров (`CRI`) с запущенными подами (`pod`).
+> - **Связи**: Стрелки показывают взаимодействие между `kube-api-server` и компонентами управления, а также связь между `kube-api-server` и `kubelet` на рабочих узлах.
+> - **Ключевой тренд**: Иллюстрация централизованного управления (Control Plane) распределенными вычислительными ресурсами (Nodes).
+
+### [15]
+
+# Multi-agent system stack: Control: Example
+
+As an example of Kubernetes-native distributed inference serving stack one can consider **LLM-D**$^{[12]}$: it divides serving LLM into independent levels of responsibility:
+
+**Gateway** accepts OpenAI-compatible requests and performs body-based routing
+
+**Inference Scheduler** makes SLA-aware decisions at the cluster level, taking into account the load, KV-cache and the inference stage
+
+**Inference Pools** separate prefill and decode as different workloads with independent scaling
+
+**vLLM runtime** Provides high-performance inference through dynamic batching and PagedAttention
+
+**Variant Autoscaler** scales replicas based on GPU metrics, latency, and traffic composition
+
+AIBrix is a production-ready implementation of the ***LLM-D*** architecture.
+
+> 📊 **FIGURE [13]**: Kubernetes LLM inference: gateway, SLA-aware routing, prefill/decode pools
+>
+> **Визуальный анализ**:
+> - **Тип**: Схема архитектуры системы в среде Kubernetes.
+> - **Компоненты**: 
+>   - **Client**: Отправляет `GET /completions`.
+>   - **Inference Gateway (e.g. Envoy)**: Выполняет маршрутизацию на основе тела запроса (`Body-based Routing`).
+>   - **Inference Scheduler**: Выбирает оптимальную реплику модели на основе состояния.
+>   - **Inference Pool**: Разделен на `Variant A (e.g. Prefill)` и `Variant B (e.g. Decode)`. Используется `Shared Prefix Caching` и `Independent Prefix Caching`.
+>   - **Variant Autoscaler**: Обновляет количество реплик.
+>   - **Nodes**: Поддержка инфраструктуры NVIDIA, Google Cloud, AMD, Intel.
+> - **Ключевой тренд**: Демонстрируется декомпозиция процесса инференса на специализированные пулы (Prefill/Decode) для оптимизации ресурсов под управлением интеллектуального планировщика.
+
+| Pros | Cons |
+| :--- | :--- |
+| SLA-aware routing & scheduling | KV-cache is local to pods |
+| Multi-model and multi-tenant | High architectural complexity |
+| Prefill/Decode split | Dependency on Kubernetes |
+
+### [16]
+
+# Multi-agent system stack: Hardware interaction
+
+While the orchestration tools usually operate containers, the code in this containers usually interacts directly with the hardware like via the *PyTorch*$^{[14]}$ framework. The key benefit of this framework is that it allows to use optimized operator implementations via various backends. For a particular cluster various optimizations like *APEX*$^{[15]}$ might be used. *APEX* is a set of extensions and utilities for *PyTorch* designed to accelerate the training of neural networks on the GPU by optimizing computations and reducing memory costs.
+
+**Usage:**
+* Simplifies the use of mixed-precision (AMP) training: it allows some operations to be performed at lower precision while maintaining training stability.
+* Provides optimized implementations of individual operations and fused compute units that accelerate typical sections of the training pipeline.
+* Supports components for distributed training and synchronization, helping to scale training across multiple GPUs/nodes.
+* The goal is to train models faster and run more experiments with the same resources.
+
+**Restrictions:**
+* It is not designed to analyze the behavior of an inference service.
+* It does not model queues, batching, request scheduling, or resource contention during user service mode.
+* It does not calculate inference metrics such as TTFT/TPOT, tail latency, or throughput, and does not evaluate SLO\*/SLA\*\* compliance.
+* It is not a simulator and does not support the analysis of the system's dynamic availability.
+
+### [17]
+
+# Conclusions on stage 1.1
+
+An analysis of existing inference tools allowed us to gain basic knowledge of the architecture, principles of algorithm implementation, and mechanisms for managing and planning complex systems:
+
+*   **LLM systems** as complex multi-agent structures with distributed roles, communication and orchestration;
+*   **Codex** as an implementation of an autonomous LLM agent that executes long-running and parallel tasks in an isolated environment (sandbox);
+*   **OpenManus** as an agent-based workflow with the integration of external tools and APIs, implementing real task chains and dependencies;
+*   **CrewAI** as a mechanism for orchestrating multiple agents with explicit management of roles, tasks, and execution logic;
+*   **vLLM** as a high-performance engine for inference of large language models (LLM), various methods of implementing inference (including scalable and distributed);
+*   **Kubernetes** as a platform for managing containerized workloads and services;
+*   **APEX** as an infrastructure tool for accelerating model training (mixed precision, distributed training).
+
+### [18]
+
+# Project deliveries (stages 1) 1.2.
+
+| Job Description | Delivery | Acceptance criteria | Acceptance Method |
+| :--- | :--- | :--- | :--- |
+| 1.2. Complete the architecture design of the dynamic availability simulation platform for complex system management, control, and scheduling services. | Simulation platform [solution design](http://example.com) report | The content covers the architecture design, data structure, configuration of input and output parameters, and detailed time nodes. | Acceptance by Huawei acceptance team. |
+
+### [19]
+
+# Dynamic Availability
+
+Modern LLM inference systems serve diverse workloads: interactive applications, batch processing, and multi-agent systems. The latter creates particularly challenging patterns - agents retry failed requests, chain multiple API calls, and generate correlated bursts. This makes strict time guarantees critical for system stability.
+
+**Definition:**
+Dynamic Availability measures the fraction of requests that meet a specified time threshold.
+
+$$
+DA = P(T_{total} \leq T_{threshold})
+$$
+
+where:
+*   $T_{threshold}$ - threshold time
+
+**Measured from simulation:**
+$$
+DA = \frac{N_{success}}{N_{total}}
+$$
+
+where:
+*   $N_{success}$ - requests meeting the time threshold
+*   $N_{total}$ - total number of requests
+
+By Law of Large Numbers, the measured ratio converges to the probability as $N \to \infty$.
+
+**Practical use:**
+*   Direct alignment with time-based service requirements
+*   Quantitative comparison of system configurations
+*   Basis for identifying reliability bottlenecks
+
+Example: $DA = 0.95$ means 95% of requests are served within time limit.
+
+To improve DA, we must identify which components to optimize $\rightarrow$ Sensitivity Analysis
+
+### [20]
+
+# Sensitivity research: Classical statistics
+
+**Background: Classical Reliability Models.** As part of our research, we reviewed classical approaches to reliability modeling to understand existing methodologies.
+
+**Operational readiness ratio$^{[16]}$.** The probability that the system will be operational at any given moment in time and, from that moment on, will continue to be operational for a specified period of time.
+
+| Pros | Cons |
+| :--- | :--- |
+| • Comprehensiveness.<br>• The assessment takes into account both the system's readiness at a random moment and its ability to perform the task thereafter. | • Time dependence.<br>• The assessment depends on the choice of the review interval, which complicates comparison of systems. |
+
+**Probability of system failure-free operation$^{14}$.** For a top-level element, the probability of system failure is calculated as the product of the probabilities of failure of each of the preceding elements.
+
+| Pros | Cons |
+| :--- | :--- |
+| • Ease of calculation.<br>• Easily calculated for both serial and parallel structures. | • Static.<br>• The assessment does not take into account changes in failure rates over time. |
+
+### [21]
+
+# Sensitivity research: Nelson reliability model
+
+There are various models of system reliability. The following were considered in this study:
+
+**Measuring models.** Based on measuring reliability properties for a fixed software configuration. It is assumed that detected errors are not corrected.
+
+**Nelson model**$^{[17]}$. The Nelson model estimates software reliability as the probability of failure-free operation during a given test run, calculated by dividing all possible program inputs into disjoint domains, with each domain assigned a probability of being used in real-world operation. The final reliability estimate is obtained by summing, over all domains, the product of the probability of selecting input data from a given domain and the frequency of successful test runs in that domain.
+
+| Pros | Cons |
+| :--- | :--- |
+| • Nelson's model takes into account not only the number of remaining faults, but also how often the fault-causing module is used. | • The model is subject to the curse of dimensionality. The number of paths grows exponentially as the number of branches increases. |
+
+### [22]
+
+# Sensitivity research: Musa reliability model
+
+**Evaluation models** are based on a series of test runs when testing systems in a real environment and depend on the frequency of occurrence and elimination of causes of failures and their intensity.
+
+**Musa model**$^{[18], [19]}$. The idea behind the model is that software reliability is directly related to the number of errors remaining in the code and can be quantified by the failure rate, measured in CPU time. The model postulates that as errors are discovered and corrected during testing, the failure rate decreases linearly, and the mean time between failures increases accordingly. It takes into account the intervals between failures, the time between failures is distributed exponentially, and the failure rate is proportional to the number of errors.
+
+| Pros | Cons |
+| :--- | :--- |
+| • Simplicity and computational efficiency. Parameter estimation does not require complex calculations. | • The model does not take into account the heterogeneity of failures. Due to the assumption of linear and perfect error correction, the model may predict that high reliability levels will be reached more quickly than is actually the case. |
+
+### [23]
+
+# Sensitivity research: Musa-Okumoto reliability model
+
+**Musa–Okumoto model (logarithmic)**$^{[20], [21]}$. The model describes the process of detecting failures over time, where the average number of failures is not a linear function.
+
+The mathematical expectation of the errors found is: $m(t) = \frac{1}{\theta} \ln(\lambda_0 \theta t + 1)$, where $\lambda_0$ – initial failure rate, $\theta$ – the rate of decline of the failure rate with each eliminated defect, and the failure rate function $\lambda(t)$ is: $\lambda(t) = \frac{\lambda_0}{\lambda_0 \theta t + 1}$, $m(t)$ and $\lambda(t)$ depend on time.
+
+| Pros | Cons |
+| :--- | :--- |
+| • Unlike models that assume a finite (and fixed) number of errors in the code, the Musa-Okumoto model allows that theoretically the number of failures can grow indefinitely, which in practice reflects reality. | • The model treats all failures as homogeneous events and does not take into account the modular structure of the program and the fact that different parts of the code may have different reliability. |
+
+**Our approach.** Classical models focus on software reliability during testing phase. Our work addresses runtime availability of distributed inference systems $\rightarrow$ Dynamic Availability metric (next).
+
+### [24]
+
+# Sensitivity definition
+
+Given DA metric, we need to identify which system components have the greatest impact on availability.
+
+**Definition:**
+Sensitivity measures how DA changes when a component parameter is varied.
+
+$$
+S_{i}^{(\theta)} = \frac{\partial DA}{\partial \theta_{i}}
+$$
+
+where:
+*   $\theta_{i}$ - parameter of component $i$ ($T, P_{err}, D_{delay}, etc.$)
+*   $S_{i}^{(\theta)}$ - sensitivity index
+
+Practical use:
+*   Prioritize optimization efforts
+*   Identify reliability bottlenecks
+*   Guide resource allocation decisions
+
+**Example application:** If $S(P_{err}, Decode) = -0.4$, then reducing Decode error rate by $10\%$ improves DA by approximately $4\%$.
+
+For stochastic simulators, analytical derivatives are unavailable. Naive numerical methods require prohibitive computational cost $\rightarrow$ specialized SA methods needed.
+
+### [25]
+
+# Sensitivity calculation complexity
+
+**Classical numerical differentiation:**
+
+$$
+S_i \approx \frac{DA(\theta_i + \Delta) - DA(\theta_i - \Delta)}{2\Delta}
+$$
+
+**Why this fails for stochastic simulators:**
+
+**Problem 1: Statistical noise**
+Each $DA$ estimate has variance $\sigma^2 \approx \frac{DA(1-DA)}{N}$. For $DA \approx 0.95$ and $N = 10'000$ runs: $\sigma \approx 0.002$. Parameter effects smaller than $\sim 2.0\sigma \approx 0.004$ (0.4% change in $DA$) are indistinguishable from noise at 95% confidence.
+
+**Problem 2: $\Delta$ selection dilemma**
+*   Small $\Delta \rightarrow$ noise dominates signal
+*   Large $\Delta \rightarrow$ poor estimate of derivative
+
+**Problem 3: Computational cost**
+For $P$ parameters: $2P$ evaluations needed. Each evaluation requires $N$ simulations for reliable results.
+
+Example: $P = 10, N \approx 10'000$ (typical) $\rightarrow$ 200,000 total simulations.
+
+**Solution:** Specialized SA methods (Morris, PAWN, Sobol)
+These methods use structured sampling strategies to extract more information per simulation, reducing computational cost by orders of magnitude compared to the naive approach.
+
+### [26]
+
+# Sensitivity Analysis: Methods Overview
+
+### Why SA for stochastic simulator?
+**Problem:** Finite difference method is unstable for Monte Carlo simulations due to noise.
+**Solution:** Use specialized SA methods designed for stochastic models.
+
+### Three-stage pipeline for sensitivity analysis:
+**Stage 1 - Morris Screening:**
+Rapidly evaluates all parameters using elementary effects. Computes $\mu^*$ (mean absolute effect) and $\sigma$ (standard deviation) for each parameter. Parameters with low $\mu^*$ are filtered out, reducing computational cost for subsequent stages.
+
+**Stage 2 - PAWN Analysis:**
+For remaining parameters, computes sensitivity indices by measuring how DA distribution changes when a parameter is fixed. Generates unconditional sample ($N=3000$ simulations with all parameters varying), then conditional samples for each parameter (fixing one parameter at different values).
+**Output:** ranked sensitivity indices showing which parameters most affect DA.
+
+**Stage 3 - RSA Diagnostic:**
+Splits simulation results into "success" and "failure" groups based on DA threshold. Identifies parameter ranges that lead to failures.
+**Output:** operational limits (e.g., "keep $P_{err} < 0.06$").
+
+---
+
+### Methods comparison:
+
+| Method | Measures | Cost | Use case |
+| :--- | :--- | :--- | :--- |
+| *Sobol* | Variance decomposition | High | Interactions |
+| *Morris* | Elementary effects | Low | Screening |
+| *PAWN* | CDF shift | Medium | Threshold metrics |
+| *RSA* | Group separation | Zero* | Diagnostics |
+
+**Conclusion:** For threshold metric $DA = F(T_{threshold})$, PAWN is more directly related than Sobol.
+
+> 📊 **FIGURE**: Three-Stage Pipeline
+>
+> **Визуальный анализ**:
+> - **Тип**: Схема технологического процесса (Flowchart).
+> - **Компоненты**: 
+>   1. **Morris**: вход $k=11 \to$ выход $k'=6$.
+>   2. **PAWN**: расчет индексов $S_i$.
+>   3. **RSA**: определение зон риска (Risk zones).
+> - **Ключевой тренд**: Процесс представляет собой последовательное сужение пространства параметров от первичного скрининга до детальной диагностики рисков.
+
+---
+\* RSA reuses PAWN sample
+
+### [27]
+
+# Sensitivity Analysis: Morris and PAWN methods
+
+---
+
+### Morris Screening
+**Elementary Effect:**
+$$
+EE_i = \frac{f(X + \Delta \cdot e_i) - f(X)}{\Delta}
+$$
+
+**Metrics:**
+$$
+\mu_i^* = mean(| EE_i |), \sigma_i = std(EE_i)
+$$
+
+**Morris Interpretation:**
+*   *High* $\mu^*$, *low* $\sigma \rightarrow$ *important, linear effect*
+*   *High* $\mu^*$, *high* $\sigma \rightarrow$ *important, nonlinear/interactions*
+*   *Low* $\mu^* \rightarrow$ *can be discarded*
+
+**Output:** Ranked list of parameters by $\mu^*$ value.
+
+**Cost:**
+$N = r \cdot (k + 1)$, where $r = 30, k = 11 \rightarrow 360$ runs
+
+---
+
+### PAWN Analysis
+Key idea: $DA = F(T_{threshold})$ is a CDF value. PAWN measures CDF shift.
+$$
+S_i = median_{x_i} \left( \max_{y} | F_Y(y) - F_{Y|X_i}(y) | \right)
+$$
+
+**PAWN algorithm:**
+1.  Generate $N_u$ unconditional samples (vary all parameters)
+2.  For each parameter $i$: split its range into $S$ slices
+3.  For each slice: generate $N_c$ conditional samples (fix parameter $i$, vary others)
+4.  Compute KS-statistic (maximum difference between unconditional and conditional distributions)
+5.  $S_i = median(KS \text{ across slices})$
+
+**Output:** Sensitivity indices $S_i$ for each parameter, ranked by magnitude.
+
+**Cost:**
+$N_u + k' \cdot S \cdot N_c = 3000 + 6 \cdot 10 \cdot 200 = 15000 \text{ runs}$
+
+### [28]
+
+# Sensitivity Analysis: RSA method and Integration
+
+### RSA (Regional Sensitivity Analysis) workflow:
+1. Use simulation results from PAWN stage ($N=3000$ samples)
+2. Set target threshold (e.g., $DA_{target} = 0.99$)
+3. Split samples:
+   *Behavioral* ($DA \ge target$) vs *Non-behavioral* ($DA < target$)
+4. For each parameter: compute KS value (separation metric between success/failure groups, 0-1 scale)
+5. Identify parameter ranges where failures concentrate
+
+### Identified Bottlenecks:
+
+| Parameter | KS | Recommendation |
+| :--- | :--- | :--- |
+| P_err_dc | 0.45 | keep < 0.06 |
+| T_dc | 0.38 | keep < 3.2s |
+
+**Cost:**
+0 additional runs (reuses PAWN sample)
+
+### RSA interpretation:
+* **High KS** $\rightarrow$ parameter strongly separates success from failure
+* Compare distributions to find critical ranges
+* Example output: "When $P_{err\_dc} > 0.08$, 73% of requests fail"
+
+### Integration benefit:
+PAWN identifies WHICH parameters matter. RSA identifies WHAT VALUES cause problems. Together: complete actionable guidance.
+
+> 📊 **FIGURE**: SA Module architecture: three-stage analysis pipeline
+>
+> **Визуальный анализ**:
+> - **Тип**: Схема архитектуры программного модуля (Orchestrator).
+> - **Компоненты**: 
+>   - **Execution Backend**: Содержит Engine (Simulator).
+>   - **Analysis Methods**: Последовательная цепочка методов Morris $\rightarrow$ PAWN $\rightarrow$ RSA.
+>   - **Outputs**: DA (Data Availability), Sensitivity Indices, Recommendations.
+> - **Потоки данных**: Запросы (requests) идут от методов анализа к симулятору; результаты (latency, N_success) возвращаются обратно.
+> - **Ключевой тренд**: Иллюстрирует интеграцию RSA как финального этапа в конвейере анализа чувствительности для получения конкретных рекомендаций.
+
+### [29]
+
+# Stochastic simulation: Ready-to-use approaches
+
+*APEX+*$^{[22]}$ - this is an LLM serving (inference system) simulator that allows you to simulate the processing of a request flow and quantitatively evaluate performance and SLO compliance without fully deploying a production cluster.
+
+**Usage:**
+*   Simulates query execution over time, including trace-driven scenarios (realistic query sequences).
+*   Models the effects of batching, queuing, and parallel execution that directly impact latency and throughput.
+*   Calculates key user experience metrics: $TTFT$ - time to first token, $TPOT$ - time per token.
+*   Allows you to compare different execution plans/configurations and evaluate what proportion of requests fit within the specified SLOs according to $TTFT/TPOT$.
+*   Can rely on hardware/operation performance profiles to bring simulation closer to real GPU platforms.
+
+**Restrictions:**
+*   Focus on performance/SLO; complex failure scenarios (correlated incidents, cascading component degradations) usually require adding a fault model on top of the simulator.
+*   Some external factors (e.g. network effects) can be taken into account in a simplified manner.
+
+### [30]
+
+# Stochastic simulation: Our model: Overview
+
+To model dynamic availability for complex system management, control and planning services, it is proposed to use as a basis **oriented graph** $G = (V, E, \alpha, \beta, s, t)$, where:
+
+*   $V$ - a set of vertices, each represent an analyzed ***module/component***
+*   $E \subseteq V \times V$ - a set of directed edges that correspond to the presence of ***connections*** between specific modules
+*   $\alpha: V \rightarrow A_V$ - node attribute function. Assigns all ***node attributes***: *basic parameters* ($T, P_{err}, P_{rec}, D_{rec}, D_{delay}$), *structural parameters* ($in\_ML, mod\_ML, out\_ML$), and *aggregation type*.
+*   $\beta: E \rightarrow A_E$ - edges attribute function. Assigns all ***edge attributes***: connection parameters ($T, P_{err}, max\_retries$) and edge type (NORMAL, FALLBACK, PARALLEL).
+*   $s \in V$ - input node (query source)
+*   $t \in V$ - output vertex (calculation result)
+
+This graph models distributed systems. What parameters define node behavior during request processing?
+
+> 📊 **FIGURE**: LLM inference pipeline as graph $G = (V, E, \alpha, \beta, s, t)$ *Created by author
+>
+> **Визуальный анализ**:
+> - **Тип**: Схема направленного графа (Flowchart/Graph), представляющая конвейер инференса большой языковой модели (LLM).
+> - **Узлы (Vertices)**: Представлены прямоугольниками (напр., `V0_Cache`, `V1_LB`, `V3_Router`, `V7_Agg`, `V9_Dec`). Каждый узел содержит метаданные: ID, имя, временные параметры ($T$), вероятности ошибок ($P_{err}$) и восстановления ($P_{rec}$), а также логику агрегации.
+> - **Ребра (Edges)**: Соединяют узлы, указывая направление потока данных.
+> - **Легенда**: 
+>   - **Edge types**: Черная сплошная стрелка — NORMAL; Оранжевая пунктирная — FALLBACK; Фиолетовая — PARALLEL.
+>   - **Aggregation types**: QUEUE (с очередью), MIN (first wins), MAX (barrier sync).
+> - **Ключевой тренд**: Схема демонстрирует сложную иерархическую структуру с параллельными путями исполнения (`V4_Exp1`, `V5_Exp2`) и механизмами отказоустойчивости (Fallback пути к `V10_FB1`, `V11_FB2`). Справа приведены детальные спецификации атрибутов для ребер ($\beta$) и узлов ($\alpha$).
+
+### [31]
+
+# Stochastic simulation: Our model: Errors
+
+> 📊 **FIGURE 1**: Error handling model within a graph node.
+>
+> **Визуальный анализ**:
+> - **Тип**: Схема архитектуры узла (Node) в графе вычислений с логикой обработки ошибок.
+> - **Компоненты**: 
+>   - **NODE**: Основной контейнер, включающий блоки `in_ML`, `PROCESS`, `mod_ML` и `out_ML`.
+>   - **Потоки**: Входящий запрос (`Request`) проходит через стадию обработки, после чего происходит ветвление на `SUCCESS` (переход к `Next Node`) или `ERROR` (переход к `Target Node` для восстановления).
+>   - **Логика**: Блок `in_ML` управляет реакциями (RETRY, SKIP, PROPAGATE), блок `PROCESS` исполняет логику с параметрами $T, P_{err}$, блок `mod_ML` генерирует ошибки, а `out_ML` маршрутизирует их.
+> - **Ключевой тренд**: Схема демонстрирует инкапсуляцию логики обработки ошибок внутри каждого узла, позволяя гибко настраивать поведение системы при сбоях на разных этапах конвейера.
+
+### Reactions to incoming errors (`in_ML`)
+Defines node behavior when receiving a request that failed in predecessor. Map[ErrorType $\rightarrow$ Reaction]:
+*   **IGNORE** - error does not affect processing, continue normally without penalty
+*   **DELAY** - add penalty time $D_{delay}$ before processing, then continue
+*   **RECOVERY** - enter recovery mode for $D_{recovery}$ time, then resume processing
+*   **ROLLBACK** - return request to previous node via FALLBACK edge for retry
+
+### Error generation (`mod_ML`)
+List of error types this node can generate. Determined by component specifics:
+*   **TIMEOUT** - processing time exceeded limit $T$
+*   **CACHE_MISS** - requested data not in cache
+*   **DECODE_ERROR** - transformation failure
+*   **PARTIAL_RESULT** - incomplete output
+
+### Error routing (`out_ML`)
+Map[ErrorType $\rightarrow$ BlockID] - routing table.
+When error occurs, determines target node for recovery via FALLBACK edge.
+
+### Example from graph:
+`V0_Cache`: `mod_ML` = [CACHE_MISS, TIMEOUT]
+`out_ML` = {CACHE_MISS $\rightarrow$ `V1_LB`}
+When cache miss occurs, request routed to load balancer
+
+`V7_Agg`: `in_ML` = {PARTIAL_RESULT $\rightarrow$ DELAY}
+Waits additional time when receiving partial results from experts
+
+Node parameters define component behavior. Nodes are connected by edges that enable data flow - but how do different edge types affect request routing and error handling?
+
+### [32]
+
+# Stochastic simulation: Our model: Data flows
+
+> 📊 **FIGURE**: Graph edge types. *Created by author
+>
+> **Визуальный анализ**:
+> - **Тип**: Схема архитектуры потоков данных (Data Flow Diagram).
+> - **Компоненты**: Три сценария взаимодействия узлов (A, B, C, D).
+> - **Легенда**: 
+>   - **NORMAL (синий)**: Прямой последовательный путь $A \rightarrow B \rightarrow C$.
+>   - **FALLBACK (красный)**: Путь восстановления с петлей ретрая (retry) при ошибке на узле B.
+>   - **PARALLEL (оранжевый)**: Одновременная активация путей к узлам B и C с последующим слиянием в D.
+> - **Ключевой тренд**: Иллюстрация различных логик маршрутизации трафика в зависимости от статуса выполнения задачи (успех, ошибка, параллельное исполнение).
+
+### **NORMAL (main path)**
+Describes standard data flow between components. Activated when processing completes successfully. Forms the base topology of the system.
+Example: $V0\_Cache \Longrightarrow V1\_LB \Longrightarrow V2\_Token$ Standard request flow through cache, load balancer, and tokenizer.
+
+### **FALLBACK (recovery path)**
+Describes return path for retry on error. Activated when processing fails and recovery is needed. Request returns to previous node. Key parameter: $max\_retries$ - limits retry attempts to prevent infinite loops.
+Example: $V3\_Router \longrightarrow V11\_FB2$ When main experts unavailable, request retries via fallback path.
+
+### **PARALLEL (simultaneous paths)**
+Describes paths activated at the same time. Used for hedged requests - send to multiple nodes, use first response.
+Example: $V3\_Router$ sends request to $V4\_Exp1$ and $V5\_Exp2$ simultaneously.
+
+Edge types define routing. For parallel or sequential operations, how do we aggregate total execution time?
+
+### [33]
+
+# Stochastic simulation: Our model: Dependencies
+
+> 📊 **FIGURE 1**: Aggregation types: SUM, MIN, MAX, QUEUE.
+>
+> **Визуальный анализ**:
+> - **Тип**: Инфографика с архитектурными схемами, временными шкалами и математическими формулами.
+> - **Содержание**: Представлены четыре модели агрегации времени обработки в узлах графа:
+>   1. **SUM (Sequential)**: Последовательная обработка (A → B → C). Общее время $T = T_1 + T_2 + T_3$.
+>   2. **MIN (First wins)**: Параллельная обработка с выбором первого результата. Общее время $T = \min(T_B, T_C)$.
+>   3. **MAX (Wait for all)**: Барьерная синхронизация. Общее время $T = \max(T_1, T_2, T_3)$.
+>   4. **QUEUE (With Queuing Effects)**: Модель с учетом очереди. Общее время $T_{total} = T_{waiting} + T_{processing}$.
+> - **Ключевой тренд**: Иллюстрация того, как топология соединений и логика узла определяют итоговую задержку системы.
+
+## Aggregation Type Definition
+
+When a node receives data from multiple predecessors (fan-in topology), the system must determine how to compute the total processing time.
+
+Aggregation type is a node parameter that defines the rule for combining incoming processing times into a single value.
+
+Different system architectures require different aggregation semantics:
+*   Sequential pipelines use **SUM**
+*   Redundant systems use **MIN**
+*   Barrier synchronization uses **MAX**
+*   Resource-constrained nodes use **QUEUE**
+
+These graph concepts model distributed systems. Evaluating their availability requires a simulation platform.
+
+***
+
+### Detailed Logic of Aggregation Types:
+
+#### 1. SUM (Sequential)
+*   **Graph**: $A \xrightarrow{T_1} B \xrightarrow{T_2} C \xrightarrow{T_3}$
+*   **Formula**: $T = T_1 + T_2 + T_3$
+*   **Use case**: Pipeline processing (tokenize $\rightarrow$ encode $\rightarrow$ decode).
+
+#### 2. MIN (First wins)
+*   **Graph**: Parallel paths to node $D$ from $B$ and $C$.
+*   **Formula**: $T = \min(T_B, T_C)$
+*   **Use case**: Hedged requests (PARALLEL edges + MIN aggregation).
+
+#### 3. MAX (Wait for all)
+*   **Graph**: Router to multiple experts (Exp1, Exp2, Exp3) aggregating in 'Agg'.
+*   **Formula**: $T = \max(T_1, T_2, T_3)$
+*   **Use case**: MoE architecture (wait for all activated experts).
+
+#### 4. QUEUE (With Queuing Effects)
+*   **Logic**: Accounts for contention between requests.
+*   **Formula**: $T_{total} = T_{waiting} + T_{processing}$
+*   **Critical Condition**: $\Delta$ When $\lambda \to \mu$ (high load): $T_{waiting} \to \infty$
+*   **Use case**: Load balancers, GPU schedulers, token bucket rate limiters.
+
+### [34]
+
+# Stochastic simulation: Our model: Example
+
+Let us look at a simple model of vLLM system utilizing MoE.
+
+This real-world distributed LLM inference system demonstrates IR concepts: nodes with parameters $(T, P_{err}, P_{rec}, D_{rec}, D_{delay}, \dots, aggregation\ types)$, edges with types (normal/fallback...), and routing logic.
+
+### Architectural features:
+* **Prefill/Decode disaggregation** - separate pools for prompt processing and token generation
+* **Mixture of Experts (MoE)** - Expert Router distributes tokens across parallel Expert Groups with MAX aggregation (straggler effect)
+* **Queue-aware scheduling** - Scheduler uses QUEUE aggregation to model request batching delays
+* **Network transfer** - KV-Transfer demonstrates inter-node communication with potential failures and fallback paths
+
+Our sample model has 9 components ($V$), entry point $s$ (Source), exit point $t$ (Target), and multiple parameters per component $(T, P_{err}, P_{rec}, D_{rec}, D_{delay})$. Which components are critical? Which parameters to optimize first? How much improvement from reducing error rates?
+
+Sensitivity Analysis methods will provide quantitative answers.
+
+> 📊 **FIGURE**: vLLM + MoE inference pipeline: 9 components with normal/fallback edges and aggregation types.
+>
+> **Визуальный анализ**:
+> - **Тип**: Схема архитектуры системы (направленный граф потока данных).
+> - **Компоненты (узлы)**: 
+>   1. Source ($s$)
+>   2. API Gateway
+>   3. Scheduler (QUEUE)
+>   4. Prefill Pool
+>   5. KV-Transfer
+>   6. Decode Pool
+>   7. Expert Router
+>   8. Expert Groups (MAX)
+>   9. Target ($t$)
+> - **Легенда**: 
+>   - Сплошная линия: Normal (основной путь).
+>   - Пунктирная линия: Fallback (резервный путь при ошибке).
+>   - Текстовые метки: Типы агрегации [QUEUE/MAX].
+> - **Ключевой тренд**: Схема иллюстрирует сложную логику переходов, включая циклы (между Decode Pool и Expert Router) и механизмы отказоустойчивости (fallback с лимитами `max=3` и `max=1`).
+
+### [35]
+
+# Final solution design: Simulation Pipeline
+
+### How simulation works:
+
+**Generator:**
+*   Parses config files (topology, components, constraints)
+*   Infers implicit infrastructure (e.g., Ray if vLLM used)
+*   Outputs formal graph $G = (V, E, \alpha, \beta, s, t)$
+
+**IR (Intermediate Representation):**
+*   Stores graph as data structure
+*   Ready for simulation engine
+
+**Engine:**
+*   Generates request stream (Poisson arrival, size distribution)
+*   Simulates each request: path through graph, time at each node, errors
+*   Outputs: latency array, success count
+
+> 📊 **FIGURE**: Picture. SA Module workflow. *Created by author
+>
+> **Визуальный анализ**:
+> - **Тип**: Схема архитектуры процесса (Pipeline Diagram).
+> - **Основные блоки**: 
+>   - **Preparation**: Содержит `Config YAML` $\rightarrow$ `Generator` $\rightarrow$ `IR: Graph G`.
+>   - **Experiment Loop**: Циклический процесс взаимодействия `SA Module (Morris, PAWN, RSA)` и `Engine (Simulator)`. Модуль SA передает параметры запросов, Движок возвращает результаты (latency, success count).
+>   - **Output**: Финальный блок `DA | Sensitivity Indices | Recommendations`.
+> - **Ключевой тренд**: Иллюстрирует переход от статической конфигурации системы к динамической симуляции и последующему анализу чувствительности (Sensitivity Analysis).
+
+| Component | Input | Output | Function |
+| :--- | :--- | :--- | :--- |
+| Generator | YAML: system description, deployment config | Graph $G = (V, E, \alpha, \beta, s, t)$ | Translate system description to IR graph |
+| SA Module | Graph $G$, SA method config | $DA \in [0,1]$, Sensitivity indices $S_i$, bottleneck recommendations | Execute SA methods (Morris/PAWN/RSA) |
+| Engine | Parameters, $N$ queries | Array latency[], $N_{success}$ | Execute simulations |
+
+**Example:**
+"vLLM, 8 GPUs, MoE" $\rightarrow$ Graph (9 nodes) $\rightarrow$ 10,000 requests $\rightarrow$ $DA = 0.94$
+
+### [36]
+
+# Final solution design: Analysis Layer
+
+**How analysis works?** SA Module orchestrates three-stage pipeline:
+1. **Morris Screening**: Rank all parameters by elementary effects, filter out those with negligible impact (e.g., $11 \to 6$ parameters), reducing computational cost for subsequent analysis.
+2. **PAWN Analysis**: For remaining parameters, compute sensitivity indices that quantify "how much DA changes when parameter $X$ varies" - output: ranked list with numerical importance scores.
+3. **RSA Diagnostic**: Identify critical parameter ranges where DA drops below target - output: operational limits
+
+**Output**: Ranked bottlenecks + actionable recommendations for system optimization.
+
+> 📊 **FIGURE**: SA Module workflow. *Created by author
+>
+> **Визуальный анализ**:
+> - **Тип**: Схема архитектуры процесса (Workflow Diagram) с выделением этапов подготовки и цикла эксперимента.
+> - **Компоненты**: 
+>   - **Preparation**: Блоки `Config YAML` $\to$ `Generator` $\to$ `IR: Graph G`.
+>   - **Experiment Loop**: Взаимодействие `SA Module (Morris, PAWN, RSA)` и `Engine (Simulator)`.
+> - **Потоки данных**: Передача параметров (requests) в симулятор и получение результатов (latency[], N_success).
+> - **Итоговый выход**: Блок `DA | Sensitivity Indices | Recommendations`.
+> - **Ключевой тренд**: Процесс переходит от статического описания системы к динамическому анализу чувствительности через итеративное моделирование.
+
+| Component | Input | Output | Function |
+| :--- | :--- | :--- | :--- |
+| Generator | YAML: system description, deployment config | Graph $G = (V, E, \alpha, \beta, s, t)$ | Translate system description to IR graph |
+| SA Module | Graph $G$, SA method config | $DA \in [0,1]$, Sensitivity indices $S_i$, bottleneck recommendations | Execute SA methods (Morris/PAWN/RSA) |
+| Engine | Parameters, $N$ queries | Array $latency[]$, $N_{success}$ | Execute simulations |
+
+> ℹ️ **Примечание к вычислительной сложности**:
+> - **Computational Cost**: (rough estimate, varies widely)
+> - **Total simulations**: $\sim 16,000$
+> - **Runtime**: 4-40 hours depending on system complexity
+
+### [37]
+
+# Conclusions on stage 1.2
+
+An architecture for modeling dynamic availability of distributed inference systems has been built. At its core - four elements. The first of them, the configuration generator, transforms system specifications into formal representation. The intermediate representation stores the graph structure, while the simulation engine processes the request flow. The analysis module detects bottlenecks.
+
+The key moment - intermediate representation as a directed graph $G = (V, E, \alpha, \beta, s, t)$. Vertices represent components with parameters of processing time and error probabilities. Edges describe connections with routing types - main path, rollback, parallel execution. At the same time, aggregation methods are implemented for time calculation: sequential, parallel, with queueing.
+
+Three methods form the sensitivity analysis pipeline. The Morris Screening method filters out minor parameters. Further, the PAWN Analysis method determines sensitivity indices, while the RSA Diagnostic method identifies critical parameter ranges.
+
+The platform solves three tasks: finds critical components, lets you choose parameters for optimization, estimates expected availability improvement. Thus, modeling results become the foundation for making decisions about architecture optimization.
+
+### [38]
+
+# References
+
+### Paper & articles:
+
+[1] Guo, T., Liu, X., Chang, Z., Wu, Y., Xu, X., Yang, Y., Zhang, L., & Shen, Y. Large Language Model based Multi-Agents: A Survey of Progress and Challenges.
+
+[6] Weilin Cai, Juyong Jiang, Le Qin, Junwei Cui, Sunghun Kim, Jiayi Huang Shortcut-connected Expert Parallelism for Accelerating Mixture-of-Experts
+
+[8] Woosuk Kwon, Zhuohan Li, Siyuan Zhuang, Ying Sheng, Lianmin Zheng, Cody Hao Yu, Joseph E. Gonzalez, Hao Zhang, Ion Stoica Efficient Memory Management for Large Language Model Serving with Paged Attention
+
+[10] Llumnix: Dynamic Scheduling for Large Language Model Serving
+
+[16] Akimova G.P., Solovyev A.V, Tarkhanov I.A. Modeling The Reliability Of Distributed Information Systems. Information technology and computing systems, No. 3, 2019.
+
+[17] Nelson, E. C. Estimating software reliability from test data. Microelectronics Reliability, Vol. 17, No. 1, 1974.
+
+[18] J. D. Musa, K. Okumoto. Software reliability models: concepts, classification, comparisons, and practice. Proc. Electronic Systems Effectiveness and Life Cycle Costing Conference, Norwich, U. K., July 19-31, 1982, NATO ASI Series, Vol. F3, Springer-Verlag, Heidelberg, 1983, pp. 395-424.
+
+[19] Lavrischeva E.M., Pakulin N.V., Ryzhov A.G., Zelenov S.V. Analysis of methods for assessing the reliability of equipment and systems. Practice of methods. Trudy ISPRAN/Proc. ISP RAS, том 30, вып. 3, 2018 г., стр. 99-120. DOI: 10.15514/ISPRAS-2018-30(3)-8
+
+[20] Musa J.D., Okumoto K. A. Logarithmic Poisson Time Model for Software Reliability Measurement. In Proc. of the 7th International Conference on Software Engineering, 1984, pp. 230–238
+
+[21] Lavrischeva E.M., Pakulin N.V., Ryzhov A.G., Zelenov S.V. Analysis of methods for assessing the reliability of equipment and systems. Practice of methods. Trudy ISPRAN/Proc. ISP RAS, том 30, вып. 3, 2018 г., стр. 99-120. DOI: 10.15514/ISPRAS-2018-30(3)-8
+
+### Electronic sources and source code:
+
+| | |
+| :--- | :--- |
+| [2] https://github.com/openai/codex | [3] https://github.com/FoundationAgents/OpenManus |
+| [4] https://github.com/crewAIInc/crewAI | [5] https://gradientflow.com/manus-what-you-need-to-know |
+| [7] https://github.com/vllm-project/vllm | [9] https://github.com/AlibabaPAI/llumnix |
+| [11] https://kubernetes.io | [12] https://github.com/llm-d |
+| [13] https://aibrix.readthedocs.io | [14] https://pytorch.org |
+| [15] https://github.com/microsoft/apex | [22] https://github.com/microsoft/apex_plus |
+
+### [39]
+
+# Thank you for attention!
+
+**Saint-Petersburg State university**
+**www.spbu.ru**
+
+> 📊 **FIGURE 1**: [Фоновое изображение / Герб]
+>
+> **Визуальный анализ**:
+> - **Тип**: Графический логотип (водяной знак).
+> - **Описание**: Стилизованное изображение герба Санкт-Петербургского государственного университета, расположенное в левой части кадра. Виден двуглавый орел с короной и элементами университетской символики.
+> - **Цветовая гамма**: Монохромный темно-красный фон с более светлым оттенком красного для графических элементов и белым текстом.
+> - **Ключевой тренд**: Использование официальной академической символики для оформления финального слайда презентации.

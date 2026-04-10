@@ -508,36 +508,39 @@ ANTHROPIC_API_KEY="your_api_key"
 
 **Features**:
 - ✅ Standard Anthropic SSE streaming
-- ✅ 1M context window support (`context-1m-2025-08-07` beta)
+- ✅ 1M context window support for **Claude 4.6 models only** (`context-1m-2025-08-07` beta)
 - ✅ Prompt caching with proper cache metrics
 - ✅ Thinking blocks (proper structured format, no tag leakage)
 - ✅ All standard events (message_start, content_block_delta, etc.)
 
 **Available Models**:
-- claude-opus-4-6
-- claude-sonnet-4-6
-- claude-sonnet-4-5-20250929
-- claude-opus-4-5-20251101
-- claude-haiku-4-5-20251001
+- claude-opus-4-6 (supports 1M context)
+- claude-sonnet-4-6 (supports 1M context)
+- claude-sonnet-4-5-20250929 (200k context only)
+- claude-opus-4-5-20251101 (200k context only)
+- claude-haiku-4-5-20251001 (200k context only)
 
 **1M Context Usage**:
-Enable in UI: Models → select model → 1M Context Window (Beta) → On
+Enable in UI: Models → select **Claude 4.6 model** → 1M Context Window (Beta) → On
+
+**Important**: Only **Claude Opus 4.6** and **Claude Sonnet 4.6** support 1M context window. Claude 4.5 and earlier models are limited to 200k tokens regardless of proxy support.
 
 **Testing Results** (2026-03-21):
 - Streaming: ✅ Proper SSE format
 - Non-streaming: ✅ Correct JSON responses
 - Large context (33k+ tokens): ✅ Processed successfully
-- **1M context test (313k tokens)**: ✅ Perfect - extracted specific information from large document
+- **1M context test (313k tokens) with claude-opus-4-6**: ✅ Perfect - extracted specific information from large document
 - Prompt caching: ✅ Cache metrics reported correctly (313k cached, 12k read)
 - Thinking blocks: ✅ Structured format, no text leakage
 
 **1M Context Test Details**:
 - Document: 355,711 tokens (1000 sections)
+- Model: claude-opus-4-6 with 1M context enabled
 - Task: Extract specific section (500 out of 1000)
 - Result: Model correctly found and extracted exact text
 - Cache performance: 92% cost savings on repeated requests
 
-**Recommendation**: Excellent for production use with 1M context window workflows. Best choice for quality and caching support.
+**Recommendation**: Excellent for production use with 1M context window workflows. Use **Claude 4.6 models** for 1M context support.
 
 ---
 

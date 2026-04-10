@@ -11,7 +11,7 @@ import type { ModelDescriptionSchema } from './llm.server.types';
 
 
 // protocol: Anthropic
-import { anthropicInjectVariants, anthropicValidateModelDefs_DEV, AnthropicWire_API_Models_List, hardcodedAnthropicModels, llmsAntCreatePlaceholderModel, llmsAntInjectWebSearchInterface } from './anthropic/anthropic.models';
+import { anthropicInjectVariants, anthropicValidateModelDefs_DEV, AnthropicWire_API_Models_List, hardcodedAnthropicModels, llmsAntCreatePlaceholderModel, llmsAntInjectWebSearchInterface, normalizeAnthropicModelId } from './anthropic/anthropic.models';
 import { ANTHROPIC_API_PATHS, anthropicAccess } from './anthropic/anthropic.access';
 
 // protocol: Gemini
@@ -147,8 +147,10 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
               return b.id.localeCompare(a.id);
             })
             .map((model): ModelDescriptionSchema => {
-              // match model definition
-              const knownModel = hardcodedAnthropicModels.find(m => m.id === model.id);
+              // match model definition with normalization for proxy compatibility
+              const knownModel = hardcodedAnthropicModels.find(m =>
+                normalizeAnthropicModelId(model.id) === normalizeAnthropicModelId(m.id)
+              );
               if (knownModel) {
 
                 // update model creation time, if provided

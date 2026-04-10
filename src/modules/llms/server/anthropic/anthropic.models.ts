@@ -40,24 +40,35 @@ const _hardcodedAnthropicVariants: ModelVariantMap = {
     maxCompletionTokens: 32000,
   },
 
+  'claude-sonnet-4-6': {
+    idVariant: 'thinking',
+    label: 'Claude Sonnet 4.6 (Thinking)',
+    description: 'Claude Sonnet 4.6 with extended thinking mode for complex reasoning',
+    interfaces: [...IF_4_R, LLM_IF_ANT_ToolsSearch],
+    parameterSpecs: [...ANT_PAR_WEB_THINKING, { paramId: 'llmVndAnt1MContext' }, { paramId: 'llmVndAntSkills' }],
+    maxCompletionTokens: 64000,
+  },
+
   // Claude 4.5 models with thinking variants
+  // Note: Claude 4.5 models do NOT support 1M context (only Claude 4.6 models do)
   'claude-opus-4-5-20251101': {
     idVariant: 'thinking',
     label: 'Claude Opus 4.5 (Thinking)',
     description: 'Claude Opus 4.5 with extended thinking mode for complex reasoning and agentic workflows',
     interfaces: [...IF_4_R, LLM_IF_ANT_ToolsSearch],
-    parameterSpecs: [...ANT_PAR_WEB_THINKING, { paramId: 'llmVndAnt1MContext' }, { paramId: 'llmVndAntEffort' }, { paramId: 'llmVndAntSkills' }],
+    parameterSpecs: [...ANT_PAR_WEB_THINKING, { paramId: 'llmVndAntEffort' }, { paramId: 'llmVndAntSkills' }],
     benchmark: { cbaElo: 1468 }, // claude-opus-4-5-20251101-thinking-32k
     maxCompletionTokens: 32000,
   },
 
+  // Note: Claude 4.5 models do NOT support 1M context (only Claude 4.6 models do)
   'claude-sonnet-4-5-20250929': {
     idVariant: 'thinking',
     label: 'Claude Sonnet 4.5 (Thinking)',
     description: 'Claude Sonnet 4.5 with extended thinking mode enabled for complex reasoning',
     maxCompletionTokens: 64000,
     interfaces: [...IF_4_R, LLM_IF_ANT_ToolsSearch],
-    parameterSpecs: [...ANT_PAR_WEB_THINKING, { paramId: 'llmVndAnt1MContext' }, { paramId: 'llmVndAntSkills' }],
+    parameterSpecs: [...ANT_PAR_WEB_THINKING, { paramId: 'llmVndAntSkills' }],
     benchmark: { cbaElo: 1450 }, // claude-sonnet-4-5-20250929-thinking-32k
   },
 
@@ -93,13 +104,14 @@ const _hardcodedAnthropicVariants: ModelVariantMap = {
     benchmark: { cbaElo: 1424 }, // claude-opus-4-20250514-thinking-16k
   },
 
+  // Note: Claude 4 models do NOT support 1M context (only Claude 4.6 models do)
   'claude-sonnet-4-20250514': {
     idVariant: 'thinking',
     label: 'Claude Sonnet 4 (Thinking)',
     description: 'Claude Sonnet 4 with extended thinking mode enabled for complex reasoning',
     maxCompletionTokens: 64000,
     interfaces: IF_4_R,
-    parameterSpecs: [...ANT_PAR_WEB_THINKING, { paramId: 'llmVndAnt1MContext' }],
+    parameterSpecs: [...ANT_PAR_WEB_THINKING],
     benchmark: { cbaElo: 1400 }, // claude-sonnet-4-20250514-thinking-32k
   },
 
@@ -144,8 +156,28 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
       },
     },
   },
+  {
+    id: 'claude-sonnet-4-6', // Active
+    label: 'Claude Sonnet 4.6', // 🌟
+    description: 'Latest Sonnet model with advanced reasoning and 1M context support',
+    contextWindow: 200000,
+    maxCompletionTokens: 64000,
+    interfaces: [...IF_4, LLM_IF_ANT_ToolsSearch],
+    parameterSpecs: [...ANT_PAR_WEB, { paramId: 'llmVndAnt1MContext' }, { paramId: 'llmVndAntSkills' }],
+    chatPrice: {
+      input: [{ upTo: 200000, price: 3 }, { upTo: null, price: 6 }],
+      output: [{ upTo: 200000, price: 15 }, { upTo: null, price: 22.50 }],
+      cache: {
+        cType: 'ant-bp',
+        read: [{ upTo: 200000, price: 0.30 }, { upTo: null, price: 0.60 }],
+        write: [{ upTo: 200000, price: 3.75 }, { upTo: null, price: 7.50 }],
+        duration: 300,
+      },
+    },
+  },
 
   // Claude 4.5 models
+  // Note: Claude 4.5 models do NOT support 1M context (only Claude 4.6 models do)
   {
     id: 'claude-opus-4-5-20251101', // Active
     label: 'Claude Opus 4.5', // 🌟
@@ -153,8 +185,8 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     contextWindow: 200000,
     maxCompletionTokens: 64000,
     interfaces: [...IF_4, LLM_IF_ANT_ToolsSearch],
-    parameterSpecs: [...ANT_PAR_WEB, { paramId: 'llmVndAnt1MContext' }, { paramId: 'llmVndAntEffort' }],
-    // Note: Tiered pricing - ≤200K: $5/$25, >200K: $10/$37.50 (with 1M context enabled)
+    parameterSpecs: [...ANT_PAR_WEB, { paramId: 'llmVndAntEffort' }],
+    // Note: Tiered pricing - ≤200K: $5/$25, >200K: $10/$37.50
     chatPrice: {
       input: [{ upTo: 200000, price: 5 }, { upTo: null, price: 10 }],
       output: [{ upTo: 200000, price: 25 }, { upTo: null, price: 37.50 }],
@@ -167,6 +199,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     },
     benchmark: { cbaElo: 1466 }, // claude-opus-4-5-20251101
   },
+  // Note: Claude 4.5 models do NOT support 1M context (only Claude 4.6 models do)
   {
     id: 'claude-sonnet-4-5-20250929', // Active
     label: 'Claude Sonnet 4.5', // 🌟
@@ -174,8 +207,8 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     contextWindow: 200000,
     maxCompletionTokens: 64000,
     interfaces: [...IF_4, LLM_IF_ANT_ToolsSearch],
-    parameterSpecs: [...ANT_PAR_WEB, { paramId: 'llmVndAnt1MContext' }, { paramId: 'llmVndAntSkills' }],
-    // Note: Tiered pricing - ≤200K: $3/$15, >200K: $6/$22.50 (with 1M context enabled)
+    parameterSpecs: [...ANT_PAR_WEB, { paramId: 'llmVndAntSkills' }],
+    // Note: Tiered pricing - ≤200K: $3/$15, >200K: $6/$22.50
     // Cache pricing also tiered: write 1.25× input, read 0.10× input
     chatPrice: {
       input: [{ upTo: 200000, price: 3 }, { upTo: null, price: 6 }],
@@ -227,6 +260,7 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     chatPrice: { input: 15, output: 75, cache: { cType: 'ant-bp', read: 1.50, write: 18.75, duration: 300 } },
     benchmark: { cbaElo: 1414 }, // claude-opus-4-20250514
   },
+  // Note: Claude 4 models do NOT support 1M context (only Claude 4.6 models do)
   {
     id: 'claude-sonnet-4-20250514', // Active
     label: 'Claude Sonnet 4',
@@ -234,8 +268,8 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     contextWindow: 200000,
     maxCompletionTokens: 64000,
     interfaces: IF_4,
-    parameterSpecs: [...ANT_PAR_WEB, { paramId: 'llmVndAnt1MContext' }],
-    // Note: Tiered pricing - ≤200K: $3/$15, >200K: $6/$22.50 (with 1M context enabled)
+    parameterSpecs: ANT_PAR_WEB,
+    // Note: Tiered pricing - ≤200K: $3/$15, >200K: $6/$22.50
     // Cache pricing also tiered: write 1.25× input, read 0.10× input
     chatPrice: {
       input: [{ upTo: 200000, price: 3 }, { upTo: null, price: 6 }],
@@ -353,6 +387,17 @@ export namespace AnthropicWire_API_Models_List {
 
 
 // -- Helper Functions --
+
+/**
+ * Normalizes Anthropic model IDs for matching with hardcoded definitions.
+ * - Converts dots to dashes (4.6 → 4-6)
+ * - Removes date suffixes from 4.6 models (claude-opus-4-6-20250205 → claude-opus-4-6)
+ */
+export function normalizeAnthropicModelId(id: string): string {
+  return id
+    .replace(/\./g, '-')
+    .replace(/^(claude-(?:opus|sonnet|haiku)-4-6)-\d{8}$/, '$1');
+}
 
 export function anthropicValidateModelDefs_DEV(availableModels: AnthropicWire_API_Models_List.ModelObject[]): void {
   if (DEV_DEBUG_ANTHROPIC_MODELS) {
