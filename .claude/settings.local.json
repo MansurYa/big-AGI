@@ -1,4 +1,5 @@
 {
+"ignoreOrganizationModelRestrictions": true,
   "permissions": {
     "allow": [
       "Bash(cat:*)",
@@ -42,5 +43,8 @@
       "Read(node_modules/**)"
     ]
   },
-  "outputStyle": "default"
+  "outputStyle": "default",
+  "enabledPlugins": {
+    "dream@claude-dream": true
+  }
 }

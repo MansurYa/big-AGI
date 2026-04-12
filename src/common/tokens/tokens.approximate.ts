@@ -8,7 +8,7 @@ const DEBUG_TOKEN_COUNT = false;
 // Some proxies inject system prompts that add tokens to every request
 const PROXY_TOKEN_OFFSETS: Record<string, number> = {
   'api.kiro.cheap': 2400, // kiro.cheap adds ~2400 tokens system prompt
-  // Add other proxies here as needed
+  'api.awstore.cloud': 2400, // awstore.cloud — same proxy as kiro.cheap, same offset
 } as const;
 
 

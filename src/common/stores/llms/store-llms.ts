@@ -509,6 +509,7 @@ export function getAnthropicHostFromLLM(llm: DLLM | null): string | undefined {
  */
 const PROXY_CONTEXT_LIMITS: Record<string, number> = {
   'api.kiro.cheap': 200000, // Tested: accepts up to ~210k, model complains at ~220k
+  'api.awstore.cloud': 200000, // Same proxy as kiro.cheap, same limit
   'dev.aiprime.store': 200000, // Also limited to 200k
 } as const;
 

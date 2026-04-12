@@ -8,7 +8,7 @@ import type { IModelVendor } from '../IModelVendor';
 export const isValidAnthropicApiKey = (apiKey?: string, anthropicHost?: string | null) => {
   if (!apiKey) return false;
 
-  // [Proxy compatibility] For custom hosts (e.g. api.kiro.cheap), accept any non-empty key
+  // [Proxy compatibility] For custom hosts (e.g. api.kiro.cheap, api.awstore.cloud), accept any non-empty key
   // Custom proxies may use different key formats than official Anthropic API
   if (anthropicHost) return apiKey.length > 0;
 

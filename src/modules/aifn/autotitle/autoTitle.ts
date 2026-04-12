@@ -22,7 +22,7 @@ export async function autoConversationTitle(conversationId: string, forceReplace
   }
 
   // Proxy compatibility: if Utility model points to a non-Anthropic ID (e.g. gpt-*),
-  // some Anthropic proxies (e.g. api.kiro.cheap) will error. Fallback to the conversation model.
+  // some Anthropic proxies (e.g. api.kiro.cheap, api.awstore.cloud) will error. Fallback to the conversation model.
   // This is defensive and only affects auto-titling.
   const isGptModelId = (id: string) => /(^|:)gpt-/i.test(id);
 

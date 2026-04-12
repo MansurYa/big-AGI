@@ -551,7 +551,7 @@ function updateMessagesTokenCounts(messages: DMessage[], forceUpdate: boolean, d
   }, 0);
 
   // Add proxy-specific token offset ONCE per conversation (not per fragment)
-  // Some proxies (e.g., api.kiro.cheap) inject system prompts that add ~2400 tokens
+  // Some proxies (e.g., api.kiro.cheap, api.awstore.cloud) inject system prompts that add ~2400 tokens
   if (chatLLMId) {
     try {
       const dllm = findLLMOrThrow(chatLLMId);

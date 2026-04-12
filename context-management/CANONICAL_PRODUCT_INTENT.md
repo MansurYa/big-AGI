@@ -5,6 +5,15 @@
 > This file defines the **desired target behavior** of the system.
 > It is the primary product-truth document for autonomous implementation, verification, and refactoring work.
 >
+> ---
+>
+> **WARNING: This system is NOT finished.**
+> The context-management system is a work in progress and requires further development before production use.
+> Key areas that need work: proxy integration, compression quality, storage handling, and end-to-end testing.
+> Do NOT deploy this system as-is without review and completion.
+>
+> ---
+>
 > If there is any conflict between:
 > - current code,
 > - existing markdown documentation,
