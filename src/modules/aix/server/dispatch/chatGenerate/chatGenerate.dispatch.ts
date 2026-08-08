@@ -51,10 +51,10 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
   switch (dialect) {
     case 'anthropic': {
 
-      // [Proxy compatibility] api.kiro.cheap / api.awstore.cloud sometimes expose non-Claude model IDs (e.g. gpt-*).
+      // [Proxy compatibility] api.kiro.cheap / api.awstore.cloud / aiprimetech.io sometimes expose non-Claude model IDs (e.g. gpt-*).
       // Those will fail on /v1/messages. Fail fast with a clear error.
       const antHost = ((access as any)?.anthropicHost || process.env.ANTHROPIC_API_HOST || '') as string;
-      const isKiroProxy = antHost.includes('api.kiro.cheap') || antHost.includes('api.awstore.cloud');
+      const isKiroProxy = antHost.includes('api.kiro.cheap') || antHost.includes('api.awstore.cloud') || antHost.includes('aiprimetech.io');
       if (isKiroProxy && !model.id.startsWith('claude-'))
         throw new Error(`Anthropic proxy: incompatible model id '${model.id}'. Please select a Claude model (id starts with 'claude-') in Models Setup.`);
 
@@ -80,11 +80,83 @@ export function createChatGenerateDispatch(access: AixAPI_Access, model: AixAPI_
         // enableCodeExecution: ...
       });
 
+      // [DEBUG] Log the full request for debugging 1M context issues
+      const requestBody = aixToAnthropicMessageCreate(model, chatGenerate, streaming);
+      const anthropicBetaHeader = anthropicRequest.headers['anthropic-beta'] || 'NOT SET';
+
+      // Count all tokens in the request body for debugging
+      let totalInputTokens = 0;
+      let systemTokens = 0;
+      let messageTokens = 0;
+      let thinkingTokens = 0;
+      let toolUseTokens = 0;
+      let toolResultTokens = 0;
+      let imageTokens = 0;
+
+      // Count system message tokens
+      if (requestBody.system) {
+        systemTokens = requestBody.system.reduce((acc: number, block: any) => {
+          if (block.type === 'text') return acc + Math.ceil((block.text?.length || 0) / 4);
+          if (block.type === 'image') return acc + 1000;
+          return acc;
+        }, 0);
+        totalInputTokens += systemTokens;
+      }
+
+      // Count message tokens
+      if (requestBody.messages) {
+        for (const msg of requestBody.messages) {
+          if (msg.content) {
+            for (const block of msg.content) {
+              if (block.type === 'text') {
+                const tokens = Math.ceil((block.text?.length || 0) / 4);
+                messageTokens += tokens;
+              } else if (block.type === 'image') {
+                imageTokens += 1000;
+              } else if (block.type === 'thinking') {
+                thinkingTokens += Math.ceil((block.thinking?.length || 0) / 4);
+              } else if (block.type === 'tool_use') {
+                toolUseTokens += Math.ceil((JSON.stringify(block.input)?.length || 0) / 4) + 50;
+              } else if (block.type === 'tool_result') {
+                toolResultTokens += Math.ceil((block.content?.[0]?.text?.length || 0) / 4) + 30;
+              }
+            }
+          }
+        }
+        totalInputTokens += messageTokens + thinkingTokens + toolUseTokens + toolResultTokens + imageTokens;
+      }
+
+      // Calculate JSON payload size
+      const jsonPayload = JSON.stringify(requestBody);
+      const payloadBytes = new TextEncoder().encode(jsonPayload).length;
+      const payloadChars = jsonPayload.length;
+
+      console.log('[DEBUG] Anthropic Request Details:', {
+        url: anthropicRequest.url,
+        modelId: requestBody.model,
+        anthropicBeta: anthropicBetaHeader,
+        systemTokens,
+        messageTokens,
+        thinkingTokens,
+        toolUseTokens,
+        toolResultTokens,
+        imageTokens,
+        totalEstimatedTokens: totalInputTokens,
+        payloadBytes,
+        payloadChars,
+        payloadCharsVsTokens: (payloadChars / totalInputTokens).toFixed(2),
+        systemMessageParts: requestBody.system?.length || 0,
+        chatMessagesCount: requestBody.messages?.length || 0,
+        streaming: streaming,
+        hasTools: !!requestBody.tools?.length,
+        hasThinking: requestBody.thinking ? `enabled(${requestBody.thinking.budget_tokens})` : 'not-set',
+      });
+
       return {
         request: {
           ...anthropicRequest,
           method: 'POST',
-          body: aixToAnthropicMessageCreate(model, chatGenerate, streaming),
+          body: requestBody,
         },
         demuxerFormat: streaming ? 'fast-sse' : null,
         chatGenerateParse: streaming ? createAnthropicMessageParser() : createAnthropicMessageParserNS(),

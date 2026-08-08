@@ -110,10 +110,17 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
   // [Anthropic, 2025-11-24] Tool Search Tool - when enabled, all custom tools get defer_loading: true
   const toolSearchEnabled = !!model.vndAntToolSearch;
 
+  // Normalize model ID for proxy compatibility:
+  // - Remove (1M) suffix and convert to [1m] format that proxy expects
+  // - Proxy uses [1m] format: "claude-opus-5[1m]", not "(1M)" format: "claude-opus-5 (1M)"
+  const normalizedModelId = model.id
+    .replace(/\s*\(1M\)\s*$/g, '[1m]')  // Convert (1M) → [1m]
+    .replace(/\[1m\]$/g, '[1m]');        // Keep existing [1m] format as-is
+
   // Construct the request payload
   const payload: TRequest = {
     max_tokens: model.maxTokens !== undefined ? model.maxTokens : 8192,
-    model: model.id,
+    model: normalizedModelId,
     system: systemMessage,
     messages: chatMessages,
     tools: chatGenerate.tools && _toAnthropicTools(chatGenerate.tools, strictToolsEnabled, toolSearchEnabled),
@@ -129,7 +136,7 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
   // Top-P instead of temperature
   if (model.topP !== undefined) {
     payload.top_p = model.topP;
-    delete payload.temperature;
+    // NOTE: temperature and thinking can coexist
   }
 
   // [Anthropic] Thinking Budget
@@ -142,7 +149,7 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
     } : {
       type: 'disabled',
     };
-    delete payload.temperature;
+    // NOTE: temperature and thinking can coexist
   }
 
   // [Anthropic] Effort parameter [Anthropic, effort-2025-11-24]
@@ -250,6 +257,16 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
   }
   console.log('[Anthropic] Model:', payload.model);
   console.log('[Anthropic] Thinking:', payload.thinking ? (payload.thinking.type === 'enabled' ? `enabled(${payload.thinking.budget_tokens})` : 'disabled') : 'not-sent');
+
+  // [DEBUG] Extended thinking logs for troubleshooting Max group issues
+  console.log('[Anthropic] Thinking Debug:', {
+    modelId: model.id,
+    modelVndAntThinkingBudget: model.vndAntThinkingBudget,
+    areToolCallsRequired,
+    canUseThinking,
+    hotFixDisableThinkingWhenToolsForced,
+    payloadThinking: payload.thinking,
+  });
 
   // Preemptive error detection with server-side payload validation before sending it upstream
   const validated = AnthropicWire_API_Message_Create.Request_schema.safeParse(payload);

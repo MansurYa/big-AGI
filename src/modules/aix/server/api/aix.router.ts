@@ -27,6 +27,17 @@ export const aixRouter = createTRPCRouter({
       connectionOptions: AixWire_API.ConnectionOptionsChatGenerate_schema.optional(), // debugDispatchRequest, debugProfilePerformance, enableResumability
     }))
     .mutation(async function* ({ input, ctx }) {
+      // [DEBUG] Log incoming request size
+      const chatSeqLen = input.chatGenerate?.chatSequence?.length ?? 0;
+      const chatSeqSize = JSON.stringify(input.chatGenerate?.chatSequence).length;
+      console.log('[DEBUG] AIX Router - chatGenerate received:', {
+        chatSequenceLength: chatSeqLen,
+        chatSequenceSizeChars: chatSeqSize,
+        systemMessageParts: input.chatGenerate?.systemMessage?.parts?.length ?? 0,
+        modelId: input.model?.id,
+        has1MContext: input.model?.vndAnt1MContext,
+      });
+
       const _d = _createDebugConfig(input.access, input.connectionOptions, input.context.name);
       const chatGenerateDispatchCreator = () => createChatGenerateDispatch(input.access, input.model, input.chatGenerate, input.streaming, !!input.connectionOptions?.enableResumability);
 

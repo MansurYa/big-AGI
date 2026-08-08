@@ -18,12 +18,12 @@ const IF_4_R = [...IF_4, LLM_IF_OAI_Reasoning];
 const ANT_PAR_WEB: ModelDescriptionSchema['parameterSpecs'] = [
   { paramId: 'llmVndAntWebSearch' },
   { paramId: 'llmVndAntWebFetch' },
-] as const;
+];
 
 const ANT_PAR_WEB_THINKING: ModelDescriptionSchema['parameterSpecs'] = [
   { paramId: 'llmVndAntThinkingBudget', required: true, hidden: false },
   ...ANT_PAR_WEB,
-] as const;
+];
 
 
 const _hardcodedAnthropicVariants: ModelVariantMap = {
@@ -46,6 +46,26 @@ const _hardcodedAnthropicVariants: ModelVariantMap = {
     description: 'Claude Sonnet 4.6 with extended thinking mode for complex reasoning',
     interfaces: [...IF_4_R, LLM_IF_ANT_ToolsSearch],
     parameterSpecs: [...ANT_PAR_WEB_THINKING, { paramId: 'llmVndAnt1MContext' }, { paramId: 'llmVndAntSkills' }],
+    maxCompletionTokens: 64000,
+  },
+
+  // Claude 4.7 models with thinking variants
+  'claude-opus-4-7': {
+    idVariant: 'thinking',
+    label: 'Claude Opus 4.7 (Thinking)',
+    description: 'Claude Opus 4.7 with extended thinking mode for complex reasoning',
+    interfaces: [...IF_4_R, LLM_IF_ANT_ToolsSearch],
+    parameterSpecs: [...ANT_PAR_WEB_THINKING, { paramId: 'llmVndAntEffort' }, { paramId: 'llmVndAntSkills' }],
+    maxCompletionTokens: 64000,
+  },
+
+  // Claude 4.8 models with thinking variants
+  'claude-opus-4-8': {
+    idVariant: 'thinking',
+    label: 'Claude Opus 4.8 (Thinking)',
+    description: 'Claude Opus 4.8 with extended thinking mode for complex reasoning',
+    interfaces: [...IF_4_R, LLM_IF_ANT_ToolsSearch],
+    parameterSpecs: [...ANT_PAR_WEB_THINKING, { paramId: 'llmVndAntEffort' }, { paramId: 'llmVndAntSkills' }],
     maxCompletionTokens: 64000,
   },
 
@@ -234,6 +254,113 @@ export const hardcodedAnthropicModels: (ModelDescriptionSchema & { isLegacy?: bo
     benchmark: { cbaElo: 1403 }, // claude-haiku-4-5-20251001
   },
 
+  // Claude Fable models
+  {
+    id: 'claude-fable-5', // Active
+    label: 'Claude Fable 5',
+    description: 'Creative storytelling model with always-on extended thinking',
+    contextWindow: 200000,
+    maxCompletionTokens: 64000,
+    interfaces: [...IF_4_R, LLM_IF_ANT_ToolsSearch],
+    parameterSpecs: [
+      { paramId: 'llmVndAntThinkingBudget', required: true, hidden: true, initialValue: 16384 }, // Always-on thinking, hidden from UI
+      { paramId: 'llmVndAntEffort' },
+      ...ANT_PAR_WEB,
+    ],
+    chatPrice: { input: 10, output: 50, cache: { cType: 'ant-bp', read: 1.00, write: 12.50, duration: 300 } },
+  },
+  {
+    id: 'claude-fable-5 (1M)', // Active
+    label: 'Claude Fable 5 (1M)',
+    description: 'Claude Fable 5 with 1M context window',
+    contextWindow: 1000000,
+    maxCompletionTokens: 32000,
+    interfaces: [...IF_4_R, LLM_IF_ANT_ToolsSearch],
+    parameterSpecs: [
+      { paramId: 'llmVndAntThinkingBudget', required: true, hidden: true, initialValue: 16384 },
+      { paramId: 'llmVndAnt1MContext' },
+      { paramId: 'llmVndAntEffort' },
+      ...ANT_PAR_WEB,
+    ],
+    chatPrice: { input: 10, output: 50, cache: { cType: 'ant-bp', read: 1.00, write: 12.50, duration: 300 } },
+  },
+
+  // Claude 4.7 models
+  {
+    id: 'claude-opus-4-7', // Active
+    label: 'Claude Opus 4.7',
+    description: 'Advanced reasoning model with enhanced capabilities',
+    contextWindow: 200000,
+    maxCompletionTokens: 64000,
+    interfaces: [...IF_4, LLM_IF_ANT_ToolsSearch],
+    parameterSpecs: [...ANT_PAR_WEB, { paramId: 'llmVndAntEffort' }],
+    chatPrice: { input: 15, output: 75, cache: { cType: 'ant-bp', read: 1.50, write: 18.75, duration: 300 } },
+  },
+  {
+    id: 'claude-opus-4-7 (1M)', // Active
+    label: 'Claude Opus 4.7 (1M)',
+    description: 'Claude Opus 4.7 with 1M context window',
+    contextWindow: 1000000,
+    maxCompletionTokens: 32000,
+    interfaces: [...IF_4, LLM_IF_ANT_ToolsSearch],
+    parameterSpecs: [...ANT_PAR_WEB, { paramId: 'llmVndAnt1MContext' }],
+    chatPrice: { input: 15, output: 75, cache: { cType: 'ant-bp', read: 1.50, write: 18.75, duration: 300 } },
+  },
+
+  // Claude 4.8 models
+  {
+    id: 'claude-opus-4-8', // Active
+    label: 'Claude Opus 4.8',
+    description: 'Latest flagship reasoning model',
+    contextWindow: 200000,
+    maxCompletionTokens: 64000,
+    interfaces: [...IF_4, LLM_IF_ANT_ToolsSearch],
+    parameterSpecs: [...ANT_PAR_WEB, { paramId: 'llmVndAntEffort' }],
+    chatPrice: { input: 15, output: 75, cache: { cType: 'ant-bp', read: 1.50, write: 18.75, duration: 300 } },
+  },
+  {
+    id: 'claude-opus-4-8 (1M)', // Active
+    label: 'Claude Opus 4.8 (1M)',
+    description: 'Claude Opus 4.8 with 1M context window',
+    contextWindow: 1000000,
+    maxCompletionTokens: 32000,
+    interfaces: [...IF_4, LLM_IF_ANT_ToolsSearch],
+    parameterSpecs: [...ANT_PAR_WEB, { paramId: 'llmVndAnt1MContext' }],
+    chatPrice: { input: 15, output: 75, cache: { cType: 'ant-bp', read: 1.50, write: 18.75, duration: 300 } },
+  },
+
+  // Claude 5 models
+  {
+    id: 'claude-sonnet-5', // Active
+    label: 'Claude Sonnet 5',
+    description: 'Next-generation Sonnet model',
+    contextWindow: 200000,
+    maxCompletionTokens: 64000,
+    interfaces: [...IF_4, LLM_IF_ANT_ToolsSearch],
+    parameterSpecs: [...ANT_PAR_WEB, { paramId: 'llmVndAntEffort' }],
+    chatPrice: { input: 3, output: 15, cache: { cType: 'ant-bp', read: 0.30, write: 3.75, duration: 300 } },
+  },
+  {
+    id: 'claude-opus-5', // Active
+    label: 'Claude Opus 5',
+    description: 'Next-generation flagship model',
+    contextWindow: 200000,
+    maxCompletionTokens: 64000,
+    interfaces: [...IF_4, LLM_IF_ANT_ToolsSearch],
+    parameterSpecs: [...ANT_PAR_WEB, { paramId: 'llmVndAntEffort' }],
+    chatPrice: { input: 15, output: 75, cache: { cType: 'ant-bp', read: 1.50, write: 18.75, duration: 300 } },
+  },
+  {
+    id: 'claude-opus-5 (1M)', // Active
+    label: 'Claude Opus 5 (1M)',
+    description: 'Claude Opus 5 with 1M context window',
+    contextWindow: 1000000,
+    maxCompletionTokens: 32000,
+    interfaces: [...IF_4, LLM_IF_ANT_ToolsSearch],
+    parameterSpecs: [...ANT_PAR_WEB, { paramId: 'llmVndAnt1MContext' }],
+    chatPrice: { input: 15, output: 75, cache: { cType: 'ant-bp', read: 1.50, write: 18.75, duration: 300 } },
+  },
+  
   // Claude 4.1 models
   {
     id: 'claude-opus-4-1-20250805', // Active
@@ -392,10 +519,14 @@ export namespace AnthropicWire_API_Models_List {
  * Normalizes Anthropic model IDs for matching with hardcoded definitions.
  * - Converts dots to dashes (4.6 → 4-6)
  * - Removes date suffixes from 4.6 models (claude-opus-4-6-20250205 → claude-opus-4-6)
+ * - Normalizes [1m] and (1M) to the same format for consistent matching
+ *   (both claude-opus-4-6[1m] and claude-opus-4-6 (1M) normalize to claude-opus-4-6 (1M))
  */
 export function normalizeAnthropicModelId(id: string): string {
   return id
     .replace(/\./g, '-')
+    .replace(/\[1m\]$/g, ' (1M)') // Convert [1m] → (1M) for matching with hardcoded models
+    .replace(/\s*\(1M\)\s*$/g, ' (1M)') // Ensure (1M) stays consistent with space
     .replace(/^(claude-(?:opus|sonnet|haiku)-4-6)-\d{8}$/, '$1');
 }
 
@@ -405,29 +536,7 @@ export function anthropicValidateModelDefs_DEV(availableModels: AnthropicWire_AP
   }
 }
 
-/**
- * Create a placeholder ModelDescriptionSchema for Anthropic models not in the hardcoded list.
- * Uses sensible defaults with the newest available interfaces for day-0 support.
- */
-export function llmsAntCreatePlaceholderModel(model: AnthropicWire_API_Models_List.ModelObject): ModelDescriptionSchema {
-  return {
-    id: model.id,
-    idVariant: '::placeholder',
-    label: model.display_name,
-    created: Math.round(new Date(model.created_at).getTime() / 1000),
-    description: 'Newest model, description not available yet.',
-    contextWindow: 200000,
-    maxCompletionTokens: 32768,
-    interfaces: IF_4_R,
-    // chatPrice: ...
-    // benchmark: ...
-  };
-}
 
-/**
- * Injects the LLM_IF_Tools_WebSearch interface for models that have web search/fetch parameters.
- * This allows the UI to show the web search indicator automatically based on model capabilities.
- */
 export function llmsAntInjectWebSearchInterface(model: ModelDescriptionSchema): ModelDescriptionSchema {
   const hasWebParams = model.parameterSpecs?.some(spec =>
     spec.paramId === 'llmVndAntWebSearch' || spec.paramId === 'llmVndAntWebFetch',
@@ -436,4 +545,52 @@ export function llmsAntInjectWebSearchInterface(model: ModelDescriptionSchema): 
     ...model,
     interfaces: [...model.interfaces, LLM_IF_Tools_WebSearch],
   } : model;
+}
+
+
+/**
+ * Returns parameterSpecs for placeholder models based on generation.
+ * Gen 4+ models get thinking, effort, web search params.
+ */
+function _placeholderParamSpecs(modelId: string): ModelDescriptionSchema['parameterSpecs'] {
+  const isGen4Plus = /claude-(?:opus|sonnet|haiku|fable)-(?:[4-9]-\d+|\d+(?:-\d+)?)/.test(modelId) ||
+    /claude-(?:opus|sonnet|haiku|fable)-[4-9][0-9]{7}/.test(modelId);
+  if (!isGen4Plus)
+    return [{ paramId: 'llmVndAntWebSearch' }, { paramId: 'llmVndAntWebFetch' }];
+  return [
+    { paramId: 'llmVndAntThinkingBudget', required: true, hidden: false },
+    { paramId: 'llmVndAntWebSearch' },
+    { paramId: 'llmVndAntWebFetch' },
+    { paramId: 'llmVndAntEffort' },
+  ];
+}
+
+/**
+ * Returns interfaces for placeholder models based on generation.
+ * Gen 4+ models get reasoning interface for thinking support.
+ */
+function _placeholderInterfaces(modelId: string): string[] {
+  const isGen4Plus = /claude-(?:opus|sonnet|haiku|fable)-(?:[4-9]-\d+|\d+(?:-\d+)?)/.test(modelId) ||
+    /claude-(?:opus|sonnet|haiku|fable)-[4-9][0-9]{7}/.test(modelId);
+  return isGen4Plus ? [...IF_4_R, LLM_IF_ANT_ToolsSearch] : IF_4;
+}
+
+/**
+ * Create a placeholder ModelDescriptionSchema for Anthropic models not in the hardcoded list.
+ * Uses sensible defaults with the newest available interfaces for day-0 support.
+ * For generation 4+ models, includes thinking, effort, and web search parameters.
+ */
+export function llmsAntCreatePlaceholderModel(model: AnthropicWire_API_Models_List.ModelObject): ModelDescriptionSchema {
+  const modelId = model.id;
+  return {
+    id: modelId,
+    idVariant: '::placeholder',
+    label: model.display_name,
+    created: Math.round(new Date(model.created_at).getTime() / 1000),
+    description: 'Newest model, description not available yet.',
+    contextWindow: 200000,
+    maxCompletionTokens: 32768,
+    interfaces: _placeholderInterfaces(modelId),
+    parameterSpecs: _placeholderParamSpecs(modelId),
+  };
 }

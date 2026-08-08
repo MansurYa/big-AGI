@@ -173,8 +173,15 @@ function _anthropicHeaders(options?: AnthropicHeaderOptions): Record<string, str
     betaFeatures.push('web-search-2025-03-05');
 
   // Add beta feature for 1M context window if enabled
-  if (options?.vndAnt1MContext)
+  // NOTE: As of August 2026, 1M context is GA - no beta header needed for supported models
+  // However, keeping the header for backward compatibility with proxies that may expect it
+  if (options?.vndAnt1MContext) {
     betaFeatures.push('context-1m-2025-08-07');
+    console.log('[DEBUG] Anthropic Access: 1M context beta header added for proxy:', {
+      vndAnt1MContext: options.vndAnt1MContext,
+      betaFeatures: betaFeatures.filter(f => f.includes('context-1m')),
+    });
+  }
 
   // Add beta features for Skills API
   if (options?.enableSkills) {
@@ -199,6 +206,14 @@ function _anthropicHeaders(options?: AnthropicHeaderOptions): Record<string, str
   // [Anthropic, 2025-11-13] Add beta feature for Structured Outputs (JSON outputs & strict tool use)
   if (options?.enableStrictOutputs)
     betaFeatures.push('structured-outputs-2025-11-13');
+
+  // [DEBUG] Log final beta header
+  if (options?.vndAnt1MContext) {
+    console.log('[DEBUG] Anthropic Access: Final beta header:', {
+      anthropicBeta: betaFeatures.length ? betaFeatures.join(',') : 'NOT SET',
+      totalBetaFeatures: betaFeatures.length,
+    });
+  }
 
   return {
     ...DEFAULT_ANTHROPIC_HEADERS,

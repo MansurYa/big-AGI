@@ -511,6 +511,7 @@ const PROXY_CONTEXT_LIMITS: Record<string, number> = {
   'api.kiro.cheap': 200000, // Tested: accepts up to ~210k, model complains at ~220k
   'api.awstore.cloud': 200000, // Same proxy as kiro.cheap, same limit
   'dev.aiprime.store': 200000, // Also limited to 200k
+  // aiprimetech.io: limit unknown, assumed 1M (see STATUS_1M_ERROR.md for investigation)
 } as const;
 
 /**
@@ -556,6 +557,9 @@ export function getEffectiveContextWindow(llm: DLLM | null): number {
   }
 
   // Unknown proxy - assume it supports 1M (optimistic)
+  if (normalizedHost) {
+    console.log(`[Big-AGI] Proxy ${normalizedHost} context limit unknown, assuming 1M (enable 1M to test)`);
+  }
   return 1000000;
 }
 

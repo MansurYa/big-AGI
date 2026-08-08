@@ -2,13 +2,14 @@ import type { DLLM } from '~/common/stores/llms/llms.types';
 
 
 // configuration
-const DEBUG_TOKEN_COUNT = false;
+const DEBUG_TOKEN_COUNT = true;
 
 // Proxy-specific token offsets
 // Some proxies inject system prompts that add tokens to every request
 const PROXY_TOKEN_OFFSETS: Record<string, number> = {
   'api.kiro.cheap': 2400, // kiro.cheap adds ~2400 tokens system prompt
   'api.awstore.cloud': 2400, // awstore.cloud — same proxy as kiro.cheap, same offset
+  'aiprimetech.io': 2400, // aiprimetech.io — same offset
 } as const;
 
 
@@ -43,6 +44,7 @@ const LANGUAGE_MULTIPLIERS = {
   'japanese': 1.35,
   'korean': 1.25,
   'arabic': 1.15,
+  'cyrillic': 1.35, // Cyrillic (Russian, Ukrainian, etc.) - ~1.35 tokens per character
   'json': 1.1,      // JSON/structured data
   'default': 1.0,
 } as const;
@@ -55,7 +57,7 @@ const CHAR_RANGES = {
   // Hiragana
   HIRAGANA_START: 0x3040,
   HIRAGANA_END: 0x309f,
-  // Katakana  
+  // Katakana
   KATAKANA_START: 0x30a0,
   KATAKANA_END: 0x30ff,
   // Hangul
@@ -64,6 +66,9 @@ const CHAR_RANGES = {
   // Arabic
   ARABIC_START: 0x0600,
   ARABIC_END: 0x06ff,
+  // Cyrillic (Russian, Ukrainian, Bulgarian, etc.)
+  CYRILLIC_START: 0x0400,
+  CYRILLIC_END: 0x04ff,
 } as const;
 
 /**
@@ -71,21 +76,22 @@ const CHAR_RANGES = {
  */
 function detectContentType(text: string): keyof typeof LANGUAGE_MULTIPLIERS {
   const length = text.length;
-  
+
   // early exit
   if (length < 10) return 'default';
-  
+
   let cjkCount = 0;
   let japaneseCount = 0;
   let koreanCount = 0;
   let arabicCount = 0;
+  let cyrillicCount = 0;
   let jsonSignals = 0;
-  
-  // single-pass character analysis
-  const sampleSize = Math.min(length, 500);
-  for (let i = 0; i < sampleSize; i++) { // sample first 500 chars for performance
+
+  // single-pass character analysis - increased sample size for better detection
+  const sampleSize = Math.min(length, 2000);
+  for (let i = 0; i < sampleSize; i++) { // increased from 500 for better language detection
     const charCode = text.charCodeAt(i);
-    
+
     // check for CJK characters using character codes
     if (charCode >= CHAR_RANGES.CJK_START && charCode <= CHAR_RANGES.CJK_END)
       cjkCount++;
@@ -96,18 +102,21 @@ function detectContentType(text: string): keyof typeof LANGUAGE_MULTIPLIERS {
       koreanCount++;
     else if (charCode >= CHAR_RANGES.ARABIC_START && charCode <= CHAR_RANGES.ARABIC_END)
       arabicCount++;
+    else if (charCode >= CHAR_RANGES.CYRILLIC_START && charCode <= CHAR_RANGES.CYRILLIC_END)
+      cyrillicCount++;
 
     // check for code/JSON patterns using character codes
     if (charCode === 123 || charCode === 125 || charCode === 91 || charCode === 93) // { } [ ]
       jsonSignals++;
   }
-  
+
   // early detection for languages (faster than full text scan)
   if (cjkCount > sampleSize * 0.1) return 'chinese';
   if (japaneseCount > sampleSize * 0.05) return 'japanese';
   if (koreanCount > sampleSize * 0.05) return 'korean';
   if (arabicCount > sampleSize * 0.1) return 'arabic';
-  
+  if (cyrillicCount > sampleSize * 0.15) return 'cyrillic'; // Cyrillic detection (Russian, etc.)
+
   // JSON/structured data detection
   if (jsonSignals > 5 && (text.includes('"') || text.includes(':')))
     return 'json';
@@ -119,6 +128,11 @@ function detectContentType(text: string): keyof typeof LANGUAGE_MULTIPLIERS {
   // Indented code blocks (efficient check)
   // if (text.includes('\n    ') || text.includes('\n\t'))
   //   return 'code';
+
+  // DEBUG: Log detection results for large texts
+  if (length > 100000 && (cjkCount > 0 || cyrillicCount > 0)) {
+    console.log(`[TOKEN DEBUG] detectContentType: len=${length}, cyrillic=${cyrillicCount}/${sampleSize} (${(cyrillicCount/sampleSize*100).toFixed(1)}%), sampleSize=${sampleSize}`);
+  }
 
   return 'default';
 }
@@ -206,10 +220,18 @@ export function approximateTextTokens(text: string, llm: DLLM, debugFrom: string
 
   // base calculation with improved formula
   const textLength = text.length;
-  let baseTokens = textLength / baseRatio;
+  let baseTokens: number;
 
-  // apply language-specific adjustments
-  baseTokens *= languageMultiplier;
+  // Special handling for Cyrillic text (Russian, Ukrainian, Bulgarian, etc.)
+  // Each Cyrillic character is approximately 1 token (vs ~3.7 for English)
+  // This is because Claude's tokenizer (BPE) assigns individual tokens to Cyrillic
+  if (contentType === 'cyrillic') {
+    baseTokens = textLength / 1.4; // Direct ratio: ~1.4 chars per token for Cyrillic
+  } else {
+    baseTokens = textLength / baseRatio;
+    // apply language-specific adjustments
+    baseTokens *= languageMultiplier;
+  }
 
   // Optimized heuristics:
 

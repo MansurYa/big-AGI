@@ -10,7 +10,12 @@
 # Local research materials
 /references/
 
-# Local one-off docs (not part of repo)
+# Ignore temporary documentation and logs
+/**/*.md
+/claude_probe.py
+/tmp/
+
+# Ignore local one-off docs (not part of repo)
 /ТЕХНИЧЕСКОЕ ЗАДАНИЕ ДЛЯ АВТОНОМНОЙ РАЗРАБОТКИ.md
 
 # dependencies

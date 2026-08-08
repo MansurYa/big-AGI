@@ -110,7 +110,7 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
           // Apply a narrow filter only for known proxies to prevent selecting incompatible models.
           // NOTE: access.anthropicHost may be null when host is provided via env; check both.
           const antHost = ((access as any)?.anthropicHost || process.env.ANTHROPIC_API_HOST) as (string | null | undefined);
-          const isKiroProxy = antHost && (antHost.includes('api.kiro.cheap') || antHost.includes('api.awstore.cloud'));
+          const isKiroProxy = antHost && (antHost.includes('api.kiro.cheap') || antHost.includes('api.awstore.cloud') || antHost.includes('aiprimetech.io'));
           if (isKiroProxy) {
             availableModels = availableModels.filter(m => typeof m?.id === 'string' && m.id.startsWith('claude-'));
 
@@ -148,6 +148,13 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
               return b.id.localeCompare(a.id);
             })
             .map((model): ModelDescriptionSchema => {
+              // Skip matching for models that already have variant suffixes - they'll be handled by variant injection
+              // This prevents duplicate models when proxy returns both base and variant versions
+              if (model.id.includes('-thinking') || model.id.includes('-reasoning') || model.id.includes('::')) {
+                // 0-day, new variant model: create an approximate model definition
+                return llmsAntCreatePlaceholderModel(model);
+              }
+
               // match model definition with normalization for proxy compatibility
               const knownModel = hardcodedAnthropicModels.find(m =>
                 normalizeAnthropicModelId(model.id) === normalizeAnthropicModelId(m.id)
@@ -166,6 +173,32 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
             })
             // inject thinking variants using the centralized variant system
             .reduce(anthropicInjectVariants, [])
+            // remove duplicate placeholder models that have a matching thinking variant
+            .filter((model) => {
+              // Keep models that don't have ::placeholder variant
+              if (!model.idVariant?.includes('::'))
+                return true;
+              // For placeholder models, check if there's a thinking variant for the same base ID
+              // (placeholder has -thinking suffix in id, thinking variant has clean base id)
+              if (model.idVariant === '::placeholder') {
+                // This will be called after reduce, we need to filter in a second pass
+                // Return true here and filter duplicates in a separate step below
+              }
+              return true;
+            })
+            // Second pass: remove placeholder duplicates
+            .filter((model, index, arr) => {
+              if (model.idVariant !== '::placeholder')
+                return true;
+              const baseId = model.id.replace(/-thinking$/, '');
+              // If there's a thinking variant for this base ID, skip the placeholder
+              const hasThinkingVariant = arr.some((m, i) => i !== index && m.id === baseId && m.idVariant === 'thinking');
+              if (hasThinkingVariant) {
+                console.log(`[Big-AGI] Filtering duplicate placeholder: ${model.id}`);
+                return false;
+              }
+              return true;
+            })
             .map(llmsAntInjectWebSearchInterface);
         },
       });

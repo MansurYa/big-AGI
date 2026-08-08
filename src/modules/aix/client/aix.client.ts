@@ -734,7 +734,16 @@ async function _aixChatGenerateContent_LL(
         );
 
       // AIX tRPC Streaming Generation from Chat input
-      else if (!rsm.resumeHandle)
+      else if (!rsm.resumeHandle) {
+        // [DEBUG] Log what we're about to send
+        console.log('[DEBUG] AIX Client - BEFORE tRPC mutate - chatGenerate:', {
+          chatSequenceLength: aixChatGenerate.chatSequence.length,
+          chatSequenceSize: JSON.stringify(aixChatGenerate.chatSequence).length,
+          systemMessageParts: aixChatGenerate.systemMessage?.parts?.length ?? 0,
+          modelId: aixModel.id,
+          has1MContext: aixModel.vndAnt1MContext,
+        });
+
         particleStream = await apiStream.aix.chatGenerateContent.mutate({
           access: aixAccess,
           model: aixModel,
@@ -743,6 +752,7 @@ async function _aixChatGenerateContent_LL(
           streaming: getLabsDevNoStreaming() ? false : aixStreaming, // [DEV] disable streaming if set in the UX (testing)
           connectionOptions: aixConnectionOptions,
         }, { signal: abortSignal });
+      }
 
       // AIX tRPC Streaming re-attachment from handle - for low-level auto-resume
       else
